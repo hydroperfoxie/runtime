@@ -16,6 +16,7 @@ export class SystemNS extends NS
 	parent = null;
 
 	constructor(kind, parent) {
+		super();
 		this.kind = kind;
 		this.parent = parent;
 	}
@@ -26,6 +27,7 @@ export class UserNS extends NS
 	uri = "";
 
 	constructor(uri) {
+		super();
 		this.uri = uri;
 	}
 }
@@ -35,6 +37,7 @@ export class ExplicitNS extends NS
 	uri = "";
 
 	constructor(uri) {
+		super();
 		this.uri = uri;
 	}
 }
