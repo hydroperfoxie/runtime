@@ -1,4 +1,4 @@
-# AS3 language
+# AS3 language basics
 
 The ActionScript 3 environment is global, not an instantiable machine; therefore it is easy to declare or use its definitions.
 
@@ -9,7 +9,7 @@ The JavaScript elements within the `as3ns` namespace use either the hungarian or
 A class is declared as follows for example:
 
 ```js
-import { as3ns } from "./steel/index.js";
+import { as3ns } from "./steel.js";
 
 // package com.my.company (public, internal)
 const publicns = as3ns.packagens("com.my.company");
