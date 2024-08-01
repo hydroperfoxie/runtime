@@ -12,7 +12,9 @@ export class SystemNS extends NS
 
 	kind = SystemNS.INTERNAL;
 
-	// Package
+	/**
+	 * Nullable reference to an ActionScript package or class.
+	 */
 	parent = null;
 
 	constructor(kind, parent) {
