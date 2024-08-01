@@ -15,7 +15,7 @@ import { as3ns } from "./steel.js";
 const publicns = as3ns.packagens("com.my.company");
 
 // public class Main { var aField:Number; }
-as3ns.defineclass(as3.name(publicns, "Main"), [
+as3ns.defineclass(as3.name(publicns, "Main"), {}, [
     [as3ns.name(publicns, "aField"), as3ns.varslot({
         readonly: false,
         name: as3ns.name(publicns, "aField"),
