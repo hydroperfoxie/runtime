@@ -1,0 +1,60 @@
+name: TypeDoc
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'
+        required: true
+        default: 'warning'
+        type: choice
+        options:
+        - info
+        - warning
+        - debug
+      tags:
+        description: 'Demo'
+        required: false
+        type: boolean
+      environment:
+        description: 'Environment to run tests against'
+        type: environment
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+        - uses: actions/checkout@v4
+        - name: Install packages
+          run: npm install
+        - name: Generate TypeDoc
+          run: npm run doc
+        - name: Git commit report
+          run: |
+            rm -rf docs
+            mkdir docs
+            mv -f target/doc/* ./docs
+  
+            # Git commit
+            git config --global user.name 'hydroperfox'
+            git config --global user.email 'hydroperfox@gmail.com'
+            git switch -C ghpages
+            for entry in "$(pwd)"/*
+            do
+                base_name=$(basename $entry)
+                if [[ $base_name != "docs" ]]; then
+                    git rm -r $entry
+                fi
+            done
+            git add .
+            git commit -m "Automated report"
+            git push origin -f ghpages

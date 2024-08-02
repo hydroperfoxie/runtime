@@ -8,6 +8,7 @@
   },
   "scripts": {
     "build": "rollup --config",
+    "doc": "npx typedoc --options typedoc.json",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -22,6 +23,7 @@
   "homepage": "https://github.com/iron-HYDROPERFOX/runtime#readme",
   "devDependencies": {
     "@types/node": "^22.1.0",
-    "rollup": "^4.19.2"
+    "rollup": "^4.19.2",
+    "typedoc": "^0.26.5"
   }
 }
