@@ -52,7 +52,7 @@ jobs:
             do
                 base_name=$(basename "$entry")
                 if [[ "$base_name" != "docs" ]]; then
-                    git rm -r "$entry"
+                    rm -rf "$entry"
                 fi
             done
             git add .
