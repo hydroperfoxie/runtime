@@ -250,3 +250,22 @@ export class Metadata
 		this.entries = entries;
 	}
 }
+
+export class Variable
+{
+	/**
+	 * Local name.
+	 */
+	name: string;
+	readonly: boolean;
+	metadata: Metadata[];
+ 	type: Class | null;
+
+	constructor(name: string, readonly: boolean, metadata: Metadata[], type: Class | null)
+	{
+		this.name = name;
+		this.readonly = readonly;
+		this.metadata = metadata;
+		this.type = type;
+	}
+}
