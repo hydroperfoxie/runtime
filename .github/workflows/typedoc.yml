@@ -42,6 +42,7 @@ jobs:
           run: |
             RUNTIME_DIR=runtime
             shopt -s dotglob
+            mkdir $RUNTIME_DIR
             mkdir $RUNTIME_DIR/docs
             mv -f target/doc/* ./$RUNTIME_DIR/docs
   
