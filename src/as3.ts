@@ -106,19 +106,132 @@ export function packageinternalns(name: string): NS
 
 export class Name
 {
-	prefix: NS;
-	local: string;
+	ns: NS;
+	name: string;
 
-	constructor(prefix: NS, local: string)
+	constructor(ns: NS, name: string)
 	{
-		this.prefix = prefix;
-		this.local = local;
+		this.ns = ns;
+		this.name = name;
+	}
+
+	toString(): string
+	{
+		if (this.ns instanceof UserNS)
+		{
+			return this.ns.uri + ":" + this.name;
+		}
+		else if (this.ns instanceof ExplicitNS)
+		{
+			return this.ns.uri + ":" + this.name;
+		}
+		else
+		{
+			return this.name;
+		}
 	}
 }
 
-export function name(prefix: NS, local: string): Name
+export function name(ns: NS, name: string): Name
 {
-	return new Name(prefix, local);
+	return new Name(ns, name);
 }
 
-const as3Names = new Map<string, Map<string, any>>();
+/**
+ * Mapping from (*ns*, *name*) to a trait object.
+ */
+export class Names
+{
+	private readonly m_dict: Map<NS, Map<string, any>> = new Map<NS, Map<string, any>>();
+
+	constructor()
+	{
+	}
+	
+	dictionary(): Map<Name, any>
+	{
+		const result = new Map<Name, any>();
+		for (const [ns, names] of this.m_dict)
+		{
+			for (const [name, trait] of names)
+			{
+				result.set(new Name(ns, name), trait);
+			}
+		}
+		return result;
+	}
+	
+	getnsname(ns: NS, name: string): any
+	{
+		return this.m_dict.get(ns)?.get(name) ?? null;
+	}
+
+	getnssetname(nsset: NS[], name: string): any
+	{
+		for (const ns of nsset)
+		{
+			const result = this.getnsname(ns, name);
+			if (result !== null)
+			{
+				return result;
+			}
+		}
+		return null;
+	}
+	
+	getpublicname(name: string): any
+	{
+		for (const [ns, names] of this.m_dict)
+		{
+			if (ns instanceof SystemNS && ns.kind == SystemNS.PUBLIC)
+			{
+				const result = names.get(name) ?? null;
+				if (result !== null)
+				{
+					return result;
+				}
+			}
+		}
+		return null;
+	}
+
+	set(ns: NS, name: string, trait: any): void
+	{
+		let names = this.m_dict.get(ns) ?? null;
+		if (names === null)
+		{
+			names = new Map<string, any>();
+			this.m_dict.set(ns, names);
+		}
+		names.set(name, trait);
+	}
+}
+
+const m_globals = new Names();
+
+export class Class
+{
+	baseClass: Class | null = null;
+
+	/**
+	 * Fully qualified name.
+	 */
+	name: string;
+	final: boolean;
+	dynamic: boolean;
+	metadata: Metadata[];
+
+	readonly staticNames: Names = new Names();
+	readonly prototypeNames: Names = new Names();
+
+	private m_static_varslots: VarSlot[] = [];
+	private m_varslots: VarSlot[] = [];
+
+	constructor(name: string, final: boolean, dynamic: boolean, metadata: Metadata[])
+	{
+		this.name = name;
+		this.final = final;
+		this.dynamic = dynamic;
+		this.metadata = metadata;
+	}
+}
