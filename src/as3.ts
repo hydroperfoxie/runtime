@@ -305,6 +305,23 @@ export class VirtualVariable
 	}
 }
 
+export class Method
+{
+	/**
+	 * Fully package qualified name.
+	 */
+	name: string;
+	metadata: Metadata[];
+	what: What;
+
+	constructor(name: string, metadata: Metadata[], what: What)
+	{
+		this.name = name;
+		this.metadata = metadata;
+		this.what = what;
+	}
+}
+
 const globalnames = new Names();
 
 const globalvarvalues = new Map<Variable, any>();
