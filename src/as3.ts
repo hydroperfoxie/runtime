@@ -207,7 +207,7 @@ export class Names
 	}
 }
 
-const m_globals = new Names();
+const globalnames = new Names();
 
 export class Class
 {
@@ -224,8 +224,8 @@ export class Class
 	readonly staticNames: Names = new Names();
 	readonly prototypeNames: Names = new Names();
 
-	private m_static_varslots: VarSlot[] = [];
-	private m_varslots: VarSlot[] = [];
+	private m_static_varslots: Variable[] = [];
+	private m_varslots: Variable[] = [];
 
 	constructor(name: string, final: boolean, dynamic: boolean, metadata: Metadata[])
 	{
@@ -233,5 +233,20 @@ export class Class
 		this.final = final;
 		this.dynamic = dynamic;
 		this.metadata = metadata;
+	}
+}
+
+/**
+ * Meta-data attached to traits such as classes, methods and properties.
+ */
+export class Metadata
+{
+	name: string;
+	entries: [string | null, string][];
+
+	constructor(name: string, entries: [string | null, string][])
+	{
+		this.name = name;
+		this.entries = entries;
 	}
 }

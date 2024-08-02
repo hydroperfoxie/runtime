@@ -15,8 +15,8 @@ import { as3 } from "./iron.js";
 const publicns = as3.packagens("com.my.company");
 
 // public class Main { var aField:Number; }
-as3.defineclass(as3.name(publicns, "Main"), {}, [
-    [as3.name(publicns, "aField"), as3.varslot({
+as3.defineclass(as3.globalnames, as3.name(publicns, "Main"), {}, [
+    [as3.name(publicns, "aField"), as3.variable({
         readonly: false,
         name: as3.name(publicns, "aField"),
         type: as3.numberclass(),
