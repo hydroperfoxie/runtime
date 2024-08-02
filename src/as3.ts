@@ -66,6 +66,7 @@ class Package
 	readonly publicns: SystemNS = new SystemNS(SystemNS.PUBLIC, null);
 	readonly internalns: SystemNS = new SystemNS(SystemNS.INTERNAL, null);
 	readonly names: Names = new Names();
+	readonly varvalues: Map<Variable, any> = new Map();
 
 	constructor(name: string) 
 	{
@@ -212,6 +213,14 @@ const globalnames = new Names();
 
 const globalvarvalues = new Map<Variable, any>();
 
+/**
+ * Encodes certain details of a class.
+ * 
+ * An instance of a class is an Array object
+ * whose first element is a reference to the Class object
+ * corresponding to that class, and is used for computing
+ * the `constructor` property.
+ */
 export class Class
 {
 	baseClass: Class | null = null;
@@ -228,7 +237,12 @@ export class Class
 	readonly esPrototype: any = {};
 	readonly prototypeNames: Names = new Names();
 
-	private m_static_varslots: Variable[] = [];
+	readonly staticvarValues: Map<Variable, any> = new Map();
+
+	/**
+	 * Sequence of instance variables. The first Variable element
+	 * identifies the slot number 1 of the instance Array.
+	 */
 	private m_varslots: Variable[] = [];
 
 	constructor(name: string, final: boolean, dynamic: boolean, metadata: Metadata[])
