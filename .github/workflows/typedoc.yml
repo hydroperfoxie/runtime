@@ -40,9 +40,10 @@ jobs:
           run: npm run doc
         - name: Git commit report
           run: |
-            rm -rf docs
-            mkdir docs
-            mv -f target/doc/* ./docs
+            RUNTIME_DIR=runtime
+            shopt -s dotglob
+            mkdir $RUNTIME_DIR/docs
+            mv -f target/doc/* ./$RUNTIME_DIR/docs
   
             # Git commit
             git config --global user.name 'hydroperfox'
@@ -51,7 +52,7 @@ jobs:
             for entry in "$(pwd)"/*
             do
                 base_name=$(basename "$entry")
-                if [[ "$base_name" != "docs" ]]; then
+                if [[ "$base_name" != "$RUNTIME_DIR" ]]; then
                     rm -rf "$entry"
                 fi
             done
