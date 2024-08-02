@@ -65,6 +65,7 @@ class Package
 	readonly name: string;
 	readonly publicns: SystemNS = new SystemNS(SystemNS.PUBLIC, null);
 	readonly internalns: SystemNS = new SystemNS(SystemNS.INTERNAL, null);
+	readonly names: Names = new Names();
 
 	constructor(name: string) 
 	{
@@ -209,6 +210,8 @@ export class Names
 
 const globalnames = new Names();
 
+const globalvarvalues = new Map<Variable, any>();
+
 export class Class
 {
 	baseClass: Class | null = null;
@@ -222,6 +225,7 @@ export class Class
 	metadata: Metadata[];
 
 	readonly staticNames: Names = new Names();
+	readonly esPrototype: any = {};
 	readonly prototypeNames: Names = new Names();
 
 	private m_static_varslots: Variable[] = [];
