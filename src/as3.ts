@@ -209,10 +209,6 @@ export class Names
 	}
 }
 
-const globalnames = new Names();
-
-const globalvarvalues = new Map<Variable, any>();
-
 /**
  * Encodes certain details of a class.
  * 
@@ -226,7 +222,7 @@ export class Class
 	baseClass: Class | null = null;
 
 	/**
-	 * Fully qualified name.
+	 * Fully package qualified name.
 	 */
 	name: string;
 	final: boolean;
@@ -243,7 +239,7 @@ export class Class
 	 * Sequence of instance variables. The first Variable element
 	 * identifies the slot number 1 of the instance Array.
 	 */
-	private m_varslots: Variable[] = [];
+	varslots: Variable[] = [];
 
 	constructor(name: string, final: boolean, dynamic: boolean, metadata: Metadata[])
 	{
@@ -272,7 +268,7 @@ export class Metadata
 export class Variable
 {
 	/**
-	 * Local name.
+	 * Fully package qualified name.
 	 */
 	name: string;
 	readonly: boolean;
@@ -287,3 +283,28 @@ export class Variable
 		this.type = type;
 	}
 }
+
+export class VirtualVariable
+{
+	/**
+	 * Fully package qualified name.
+	 */
+	name: string;
+	getter: Method | null;
+	setter: Method | null;
+	metadata: Metadata[];
+ 	type: Class | null;
+
+	constructor(name: string, getter: Method | null, setter: Method | null, metadata: Metadata[], type: Class | null)
+	{
+		this.name = name;
+		this.getter = getter;
+		this.setter = setter;
+		this.metadata = metadata;
+		this.type = type;
+	}
+}
+
+const globalnames = new Names();
+
+const globalvarvalues = new Map<Variable, any>();
