@@ -9,7 +9,7 @@ The JavaScript elements within the `as3ns` namespace use either the hungarian or
 A class is declared as follows for example:
 
 ```js
-import { as3ns } from "./steel.js";
+import { as3ns } from "./iron.js";
 
 // package com.my.company (public, internal)
 const publicns = as3ns.packagens("com.my.company");
