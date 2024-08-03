@@ -24,6 +24,10 @@ undefined is always represented as a normal JavaScript undefined value.
 
 null is always represented as a normal JavaScript null value.
 
+## Top level package
+
+The top level package consists of the full name as equivalent to the empty string **""**.
+
 ## Declaring a class
 
 A class is declared as follows for example:
@@ -68,3 +72,7 @@ Any function or method is expressed by the term "method".
 ## Namespace aliases
 
 Any `namespace ans;` directive results in what is expressed by the term "nsalias". Normally namespaces are represented by `as3.Ns`, but when they are seen as properties, they are `as3.Nsalias`.
+
+## Constructor
+
+The constructor of a class is assigned by the `ctor` option, which is responsible for manually invoking the constructor of the base class (the `super();` statement).

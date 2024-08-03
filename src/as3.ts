@@ -562,12 +562,63 @@ export function isoftype(instance: any, type: Class | Interface | null): boolean
 	}
 	if (type instanceof Class)
 	{
-		// (Number, uint, int, float)
-		check-for-number
-		// String
-		check-for-string;
-		// Boolean
-		check-for-boolean;
+		return (
+			(typeof instance === "number" && numberclasses.indexOf(type) !== -1) ||
+			(typeof instance === "string" && type == stringclass) ||
+			(typeof instance === "boolean" && type == booleanclass)
+		);
 	}
 	return type === null;
 }
+
+let $publicns = packagens("");
+
+export const numberclass = defineclass(name($publicns, "Number"),
+	{
+		final: true,
+	},
+	[
+	]
+);
+
+export const intclass = defineclass(name($publicns, "int"),
+	{
+		final: true,
+	},
+	[
+	]
+);
+
+export const uintclass = defineclass(name($publicns, "uint"),
+	{
+		final: true,
+	},
+	[
+	]
+);
+
+export const floatclass = defineclass(name($publicns, "float"),
+	{
+		final: true,
+	},
+	[
+	]
+);
+
+export const numberclasses = [numberclass, intclass, uintclass, floatclass];
+
+export const booleanclass = defineclass(name($publicns, "Boolean"),
+	{
+		final: true,
+	},
+	[
+	]
+);
+
+export const stringclass = defineclass(name($publicns, "String"),
+	{
+		final: true,
+	},
+	[
+	]
+);
