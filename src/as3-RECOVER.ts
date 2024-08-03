@@ -12,7 +12,7 @@ export function hasname(base1: any, nsset: Ns[], name: string): boolean
 	{
 		if (class1.dynamic && ns.ispublicorinternalns())
 		{
-			if ((base[1] as Map<string, any>).has(name))
+			if ((base[1] as Map<any, any>).has(name))
 			{
 				return true;
 			}

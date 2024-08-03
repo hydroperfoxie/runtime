@@ -8,7 +8,7 @@ The JavaScript elements within the `as3` namespace use either the hungarian or s
 
 An instance of a class is represented as a JavaScript `Array` whose first element is always an `as3.Class` object reference.
 
-For dynamic classes including plain `Object`, the second element is always a `Map<string, any>` describing dynamic properties that may be read, assigned, and deleted; the following elements are the fixed variables.
+For dynamic classes including plain `Object`, the second element is always a `Map<any, any>` describing dynamic properties that may be read, assigned, and deleted; the elements that follow are the fixed variables.
 
 For classes that are not dynamic, the second and consecutive elements are always the fixed variables.
 

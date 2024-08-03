@@ -266,7 +266,7 @@ export class Names
  * the `constructor` property.
  * 
  * An instance of a dynamic class will have the second element
- * as a Map<string, any> object containing dynamic properties.
+ * as a Map<any, any> object containing dynamic properties.
  */
 class Class
 {
