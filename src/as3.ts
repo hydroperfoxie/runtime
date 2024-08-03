@@ -336,7 +336,9 @@ const globalvarvalues = new Map<Variable, any>();
 
 const boundmethods = new Map<Array<any>, Map<Method, Function>>();
 
-function isoftype(instance: Array<any>, type: any): boolean
+export function isoftype(instance: Array<any>, type: any): boolean
 {
+	// type = null = *
+	// type = [object Class] = a class
 	whatever-steps-here;
 }
