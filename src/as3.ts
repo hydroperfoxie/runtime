@@ -4,6 +4,11 @@ export abstract class Ns
 {
 	abstract toString(): string;
 
+	ispublicns(): boolean
+	{
+		return this instanceof Systemns && this.kind == Systemns.PUBLIC;
+	}
+
 	ispublicorinternalns(): boolean
 	{
 		return this instanceof Systemns && (this.kind == Systemns.PUBLIC || this.kind == Systemns.INTERNAL);
@@ -176,9 +181,34 @@ export class Names
 		return result;
 	}
 	
-	hasnsname(ns: Ns, name: string): any
+	hasnsname(ns: Ns, name: string): boolean
 	{
 		return this.m_dict.get(ns)?.has(name) ?? false;
+	}
+
+	hasnssetname(nsset: Ns[], name: string): boolean
+	{
+		for (const ns of nsset)
+		{
+			const result = ns.ispublicns() ? this.haspublicname(name) : this.hasnsname(ns, name);
+			if (result)
+			{
+				return result;
+			}
+		}
+		return false;
+	}
+
+	haspublicname(name: string): boolean
+	{
+		for (const [ns, names] of this.m_dict)
+		{
+			if (ns instanceof Systemns && ns.kind == Systemns.PUBLIC)
+			{
+				return names.has(name) ?? false;
+			}
+		}
+		return false;
 	}
 	
 	getnsname(ns: Ns, name: string): any
@@ -190,7 +220,7 @@ export class Names
 	{
 		for (const ns of nsset)
 		{
-			const result = this.getnsname(ns, name);
+			const result = ns.ispublicns() ? this.getpublicname(name) : this.getnsname(ns, name);
 			if (result !== null)
 			{
 				return result;
@@ -215,7 +245,7 @@ export class Names
 		return null;
 	}
 
-	set(ns: Ns, name: string, trait: any): void
+	setnsname(ns: Ns, name: string, trait: any): void
 	{
 		let names = this.m_dict.get(ns) ?? null;
 		if (names === null)
@@ -322,11 +352,11 @@ export function defineclass(name: Name, options: ClassOptions, items: [Name, any
 		assert(item instanceof PossiblyStatic);
 		if (item.static)
 		{
-			class1.staticnames.set(itemname.ns, itemname.name, item);
+			class1.staticnames.setnsname(itemname.ns, itemname.name, item);
 		}
 		else
 		{
-			class1.prototypenames.set(itemname.ns, itemname.name, item);
+			class1.prototypenames.setnsname(itemname.ns, itemname.name, item);
 			if (item instanceof Variable)
 			{
 				thesevars.push(item);
@@ -498,7 +528,7 @@ const globalvarvals = new Map<Variable, any>();
 
 const boundmethods = new Map<Array<any>, Map<Method, Function>>();
 
-export function hasname(base1: any, name: Name): boolean
+export function hasname(base1: any, nsset: Ns[], name: string): boolean
 {
 	if (!(base1 instanceof Array))
 	{
@@ -506,18 +536,39 @@ export function hasname(base1: any, name: Name): boolean
 	}
 	const base = base1 as Array<any>;
 	const class1 = base[0] as Class;
-	if (class1.dynamic && name.ns.ispublicorinternalns())
+	for (const ns of nsset)
 	{
-		return (base[1] as Map<string, any>).has(name.name);
-	}
-	let classb = class1;
-	while (classb !== null)
-	{
-		if (classb.prototypenames.hasnsname(name.ns, name.name))
+		if (class1.dynamic && ns.ispublicorinternalns())
 		{
-			return true;
+			const result = (base[1] as Map<string, any>).has(name);
+			if (result)
+			{
+				return true;
+			}
 		}
-		classb = classb.baseclass;
+		let classb = class1;
+		if (ns.ispublicns())
+		{
+			while (classb !== null)
+				{
+					if (classb.prototypenames.haspublicname(name))
+					{
+						return true;
+					}
+					classb = classb.baseclass;
+				}
+		}
+		else
+		{
+			while (classb !== null)
+				{
+					if (classb.prototypenames.hasnsname(ns, name))
+					{
+						return true;
+					}
+					classb = classb.baseclass;
+				}
+		}
 	}
 	return false;
 }
