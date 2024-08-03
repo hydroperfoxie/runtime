@@ -328,7 +328,7 @@ export type ClassOptions =
 	ctor?: Function,
 };
 
-export function defineclass(name: Name, options: ClassOptions, items: [Name, any][]): Class
+export function defineclass(name: Name, options: ClassOptions, items: [Name, any][]): void
 {
 	let finalname = "";
 	if (name.ns instanceof Systemns && name.ns.parent instanceof Package)
@@ -372,7 +372,8 @@ export function defineclass(name: Name, options: ClassOptions, items: [Name, any
 	}
 	class1.prototypevarslots.push.apply(baseslots, thesevars);
 
-	return class1;
+	// Finish
+	globalnames.setnsname(name.ns, name.name, class1);
 }
 
 /**
