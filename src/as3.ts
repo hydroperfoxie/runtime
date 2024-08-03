@@ -588,9 +588,9 @@ export function istype(value: any, type: any): boolean
 	if (type instanceof Class)
 	{
 		return (
-			(typeof value === "number" && numberclasses.indexOf(type) !== -1) ||
-			(typeof value === "string" && type == stringclass) ||
-			(typeof value === "boolean" && type == booleanclass)
+			(typeof value === "number" && (numberclasses.indexOf(type) !== -1) || type === objectclass) ||
+			(typeof value === "string" && (type == stringclass || type === objectclass)) ||
+			(typeof value === "boolean" && (type == booleanclass || type === objectclass))
 		);
 	}
 	return type === null;
