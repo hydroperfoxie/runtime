@@ -35,7 +35,7 @@ import { as3 } from "./iron.js";
 const publicns = as3.packagens("com.my.company");
 
 // public class C1 { public var x:Number; }
-as3.defineclass(as3.globalnames, as3.name(publicns, "C1"),
+as3.defineclass(as3.name(publicns, "C1"),
     { /* class options */ },
     [
         [ as3.name(publicns, "x"), as3.variable({ type: as3.numberclass() }) ],
@@ -45,7 +45,7 @@ as3.defineclass(as3.globalnames, as3.name(publicns, "C1"),
 
 The MXMLC compiler hoists all classes so one can refer to the other in whatever code piece.
 
-Never define a class manually as `as3.defineclass` will decide variable slots (including these of the base class); that is, do not invoke `new as3.Class` to assign it to a `Names` object later.
+The order in which you define variables is sensitive as it determines the slot number in the instance `Array` (the first one is either slot number 1 or slot number 2 if the class is dynamic).
 
 ## Declaring a variable inside a package
 
@@ -64,3 +64,7 @@ Virtual variables consisting of a getter and a setter are expressed by the term 
 ## Methods
 
 Any function or method is expressed by the term "method".
+
+## Namespace aliases
+
+Any `namespace ans;` directive results in what is expressed by the term "nsalias". Normally namespaces are represented by `as3.Ns`, but when they are seen as properties, they are `as3.Nsalias`.

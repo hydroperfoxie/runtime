@@ -64,12 +64,18 @@ export class Explicitns extends Ns
 
 class Package
 {
+	/**
+	 * Full name
+	 */
 	readonly name: string;
 	readonly publicns: Systemns = new Systemns(Systemns.PUBLIC, null);
 	readonly internalns: Systemns = new Systemns(Systemns.INTERNAL, null);
 	readonly names: Names = new Names();
 	readonly varvals: Map<Variable, any> = new Map();
 
+	/**
+	 * @param name Full name
+	 */
 	constructor(name: string) 
 	{
 		this.name = name;
@@ -256,6 +262,7 @@ export class Class
 	final: boolean;
 	dynamic: boolean;
 	metadata: Metadata[];
+	ctor: Function;
 
 	readonly staticnames: Names = new Names();
 	readonly ecmaprototype: any = {};
@@ -271,14 +278,15 @@ export class Class
 	 * if the class is dynamic, the first Variable element identifies
 	 * the slot number 2 of the instance Array.
 	 */
-	varslots: Variable[] = [];
+	prototypevarslots: Variable[] = [];
 
-	constructor(name: string, final: boolean, dynamic: boolean, metadata: Metadata[])
+	constructor(name: string, final: boolean, dynamic: boolean, metadata: Metadata[], ctor: Function)
 	{
 		this.name = name;
 		this.final = final;
 		this.dynamic = dynamic;
 		this.metadata = metadata;
+		this.ctor = ctor;
 	}
 
 	recursivedescclasslist(): Class[]
@@ -308,6 +316,63 @@ export function setclassstaticvarval(className: Name, varName: Name, value: any)
 	const varb = class1.staticnames.getnsname(varName.ns, varName.name) as Variable;
 	assert(varb instanceof Variable);
 	class1.staticvarvals.set(varb, value);
+}
+
+export type ClassOptions =
+{
+	extendslist?: Class | null,
+	implementslist?: Interface[],
+	final?: boolean,
+	dynamic?: boolean,
+	metadata?: Metadata[],
+	ctor?: Function,
+};
+
+export function defineclass(name: Name, options: ClassOptions, items: [Name, any][]): Class
+{
+	let finalname = "";
+	if (name.ns instanceof Systemns && name.ns.parent instanceof Package)
+	{
+		finalname = name.ns.parent.name + "." + name.name;
+	}
+
+	const class1 = new Class(finalname, options.final ?? false, options.dynamic ?? false, options.metadata ?? [], options.ctor ?? function() {});
+
+	// Extend class
+	class1.baseclass = options.extendslist ?? null;
+
+	// Implement interfaces
+	class1.interfaces = options.implementslist ?? [];
+
+	// Define items
+	const thesevars: Variable[] = [];
+	for (const [itemname, item1] of items)
+	{
+		const item: PossiblyStatic = item1 as PossiblyStatic;
+		assert(item instanceof PossiblyStatic);
+		if (item.static)
+		{
+			class1.staticnames.set(itemname.ns, itemname.name, item);
+		}
+		else
+		{
+			class1.prototypenames.set(itemname.ns, itemname.name, item);
+			if (item instanceof Variable)
+			{
+				thesevars.push(item);
+			}
+		}
+	}
+
+	// Calculate instance slots (-constructor [- dynamic] [+ fixed1 [+ fixed2 [+ fixedN]]])
+	let baseslots: Variable[] = [];
+	if (class1.baseclass !== null)
+	{
+		baseslots = class1.baseclass.prototypevarslots.slice(0);
+	}
+	class1.prototypevarslots.push.apply(baseslots, thesevars);
+
+	return class1;
 }
 
 /**
@@ -357,7 +422,23 @@ export class Metadata
 	}
 }
 
-export class Variable
+export class PossiblyStatic
+{
+	static: boolean = false;
+}
+
+export class Nsalias extends PossiblyStatic
+{
+	ns: Ns;
+
+	constructor(ns: Ns)
+	{
+		super();
+		this.ns = ns;
+	}
+}
+
+export class Variable extends PossiblyStatic
 {
 	/**
 	 * Fully package qualified name.
@@ -369,6 +450,7 @@ export class Variable
 
 	constructor(name: string, readonly: boolean, metadata: Metadata[], type: Class | null)
 	{
+		super();
 		this.name = name;
 		this.readonly = readonly;
 		this.metadata = metadata;
@@ -381,14 +463,17 @@ export type VariableOptions =
 	readonly?: boolean,
 	metadata?: Metadata[],
 	type: Class | null,
+	static?: boolean,
 };
 
 export function variable(options: VariableOptions): Variable
 {
-	return new Variable("", options.readonly ?? false, options.metadata ?? [], options.type);
+	const varb = new Variable("", options.readonly ?? false, options.metadata ?? [], options.type);
+	varb.static = options.static ?? false;
+	return  varb;
 }
 
-export class VirtualVariable
+export class VirtualVariable extends PossiblyStatic
 {
 	/**
 	 * Fully package qualified name.
@@ -401,6 +486,7 @@ export class VirtualVariable
 
 	constructor(name: string, getter: Method | null, setter: Method | null, metadata: Metadata[], type: Class | null)
 	{
+		super();
 		this.name = name;
 		this.getter = getter;
 		this.setter = setter;
@@ -409,7 +495,7 @@ export class VirtualVariable
 	}
 }
 
-export class Method
+export class Method extends PossiblyStatic
 {
 	/**
 	 * Fully package qualified name.
@@ -428,6 +514,7 @@ export class Method
 
 	constructor(name: string, metadata: Metadata[], disp: Function, nodisp: Function)
 	{
+		super();
 		this.name = name;
 		this.metadata = metadata;
 		this.disp = disp;
