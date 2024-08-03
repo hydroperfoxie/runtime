@@ -528,49 +528,26 @@ const globalvarvals = new Map<Variable, any>();
 
 const boundmethods = new Map<Array<any>, Map<Method, Function>>();
 
-export function hasname(base1: any, nsset: Ns[], name: string): boolean
+/**
+ * Checks whether an object has or inherits a given property name.
+ * 
+ * This method is used by the `name in o` expression, where
+ * `o` is either a base class or a base instance.
+ */
+export function inobject(base: any, name: string): boolean
 {
-	if (!(base1 instanceof Array))
-	{
-		return false;
-	}
-	const base = base1 as Array<any>;
-	const class1 = base[0] as Class;
-	for (const ns of nsset)
-	{
-		if (class1.dynamic && ns.ispublicorinternalns())
-		{
-			const result = (base[1] as Map<string, any>).has(name);
-			if (result)
-			{
-				return true;
-			}
-		}
-		let classb = class1;
-		if (ns.ispublicns())
-		{
-			while (classb !== null)
-				{
-					if (classb.prototypenames.haspublicname(name))
-					{
-						return true;
-					}
-					classb = classb.baseclass;
-				}
-		}
-		else
-		{
-			while (classb !== null)
-				{
-					if (classb.prototypenames.hasnsname(ns, name))
-					{
-						return true;
-					}
-					classb = classb.baseclass;
-				}
-		}
-	}
-	return false;
+	checks_here;
+}
+
+/**
+ * Checks whether an object owns a given property name.
+ * 
+ * This method looks for Array element indices and fixed variables,
+ * either for a base class or for a base instance.
+ */
+export function hasownproperty(base: any, name: string): boolean
+{
+	checks_here;
 }
 
 /**
