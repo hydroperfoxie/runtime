@@ -216,6 +216,9 @@ export class Names
  * whose first element is a reference to the Class object
  * corresponding to that class, and is used for computing
  * the `constructor` property.
+ * 
+ * An instance of the a dynamic class will have the second element
+ * as a plain JavaScript object containing dynamic properties.
  */
 export class Class
 {
@@ -236,8 +239,12 @@ export class Class
 	readonly staticvarValues: Map<Variable, any> = new Map();
 
 	/**
-	 * Sequence of instance variables. The first Variable element
-	 * identifies the slot number 1 of the instance Array.
+	 * Sequence of instance variables.
+	 * 
+	 * If the class is not dynamic, the first Variable element
+	 * identifies the slot number 1 of the instance Array;
+	 * if the class is dynamic, the first Variable element identifies
+	 * the slot number 2 of the instance Array.
 	 */
 	varslots: Variable[] = [];
 
@@ -315,7 +322,8 @@ export class Method
 
 	/**
 	 * The main function of a method: if it is overriden by another method,
-	 * then it will not invoke `nodispfn` and will interrupt.
+	 * then it will not invoke `nodispfn` and will interrupt, invoking
+	 * the overriding method.
 	 */
 	dispfn: Function;
 
@@ -336,9 +344,27 @@ const globalvarvalues = new Map<Variable, any>();
 
 const boundmethods = new Map<Array<any>, Map<Method, Function>>();
 
-export function isoftype(instance: Array<any>, type: any): boolean
+/**
+ * `v is T`
+ */
+export function isoftype(instance: Array<any>, type: Class | null): boolean
 {
 	// type = null = *
 	// type = [object Class] = a class
-	whatever-steps-here;
+	if (type === null)
+	{
+		return true;
+	}
+	if (!(type instanceof Class))
+	{
+		return false;
+	}
+	const instanceClasses = [];
+	let x = instance[0] as Class | null;
+	while (x !== null)
+	{
+		instanceClasses.push(x);
+		x = x.baseClass;
+	}
+	return instanceClasses.indexOf(type!) !== -1;
 }
