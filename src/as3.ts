@@ -1,9 +1,11 @@
-export abstract class NS
+import { assert } from "./util";
+
+export abstract class Ns
 {
 	abstract toString(): string;
 }
 
-export class SystemNS extends NS
+export class Systemns extends Ns
 {
 	static INTERNAL = 0;
 	static PUBLIC = 1;
@@ -11,7 +13,7 @@ export class SystemNS extends NS
 	static PROTECTED = 3;
 	static STATIC_PROTECTED = 4;
 
-	kind: number = SystemNS.INTERNAL;
+	kind: number = Systemns.INTERNAL;
 
 	/**
 	 * Nullable reference to an ActionScript package or class.
@@ -30,7 +32,7 @@ export class SystemNS extends NS
 	}
 }
 
-export class UserNS extends NS
+export class Userns extends Ns
 {
 	uri: string = "";
 
@@ -45,7 +47,7 @@ export class UserNS extends NS
 	}
 }
 
-export class ExplicitNS extends NS
+export class Explicitns extends Ns
 {
 	uri: string = "";
 
@@ -63,10 +65,10 @@ export class ExplicitNS extends NS
 class Package
 {
 	readonly name: string;
-	readonly publicns: SystemNS = new SystemNS(SystemNS.PUBLIC, null);
-	readonly internalns: SystemNS = new SystemNS(SystemNS.INTERNAL, null);
+	readonly publicns: Systemns = new Systemns(Systemns.PUBLIC, null);
+	readonly internalns: Systemns = new Systemns(Systemns.INTERNAL, null);
 	readonly names: Names = new Names();
-	readonly varvalues: Map<Variable, any> = new Map();
+	readonly varvals: Map<Variable, any> = new Map();
 
 	constructor(name: string) 
 	{
@@ -78,10 +80,32 @@ class Package
 
 const packages = new Map<string, Package>();
 
+export function getpackagevarval(name: Name): any
+{
+	const ns = name.ns as Systemns;
+	assert(ns instanceof Systemns);
+	const pckg = ns.parent as Package;
+	assert(pckg instanceof Package);
+	const varb = pckg.names.getnsname(ns, name.name) as Variable;
+	assert(varb instanceof Variable);
+	return pckg.varvals.get(varb);
+}
+
+export function setpackagevarval(name: Name, value: any): void
+{
+	const ns = name.ns as Systemns;
+	assert(ns instanceof Systemns);
+	const pckg = ns.parent as Package;
+	assert(pckg instanceof Package);
+	const varb = pckg.names.getnsname(ns, name.name) as Variable;
+	assert(varb instanceof Variable);
+	pckg.varvals.set(varb, value);
+}
+
 /**
  * Retrieves the `public` namespace of a package.
  */
-export function packagens(name: string): NS
+export function packagens(name: string): Ns
 {
 	if (packages.has(name))
 	{
@@ -95,7 +119,7 @@ export function packagens(name: string): NS
 /**
  * Retrieves the `internal` namespace of a package.
  */
-export function packageinternalns(name: string): NS
+export function packageinternalns(name: string): Ns
 {
 	if (packages.has(name))
 	{
@@ -108,10 +132,10 @@ export function packageinternalns(name: string): NS
 
 export class Name
 {
-	ns: NS;
+	ns: Ns;
 	name: string;
 
-	constructor(ns: NS, name: string)
+	constructor(ns: Ns, name: string)
 	{
 		this.ns = ns;
 		this.name = name;
@@ -119,11 +143,11 @@ export class Name
 
 	toString(): string
 	{
-		if (this.ns instanceof UserNS)
+		if (this.ns instanceof Userns)
 		{
 			return this.ns.uri + ":" + this.name;
 		}
-		else if (this.ns instanceof ExplicitNS)
+		else if (this.ns instanceof Explicitns)
 		{
 			return this.ns.uri + ":" + this.name;
 		}
@@ -134,7 +158,7 @@ export class Name
 	}
 }
 
-export function name(ns: NS, name: string): Name
+export function name(ns: Ns, name: string): Name
 {
 	return new Name(ns, name);
 }
@@ -144,7 +168,7 @@ export function name(ns: NS, name: string): Name
  */
 export class Names
 {
-	private readonly m_dict: Map<NS, Map<string, any>> = new Map<NS, Map<string, any>>();
+	private readonly m_dict: Map<Ns, Map<string, any>> = new Map<Ns, Map<string, any>>();
 
 	constructor()
 	{
@@ -163,12 +187,12 @@ export class Names
 		return result;
 	}
 	
-	getnsname(ns: NS, name: string): any
+	getnsname(ns: Ns, name: string): any
 	{
 		return this.m_dict.get(ns)?.get(name) ?? null;
 	}
 
-	getnssetname(nsset: NS[], name: string): any
+	getnssetname(nsset: Ns[], name: string): any
 	{
 		for (const ns of nsset)
 		{
@@ -185,7 +209,7 @@ export class Names
 	{
 		for (const [ns, names] of this.m_dict)
 		{
-			if (ns instanceof SystemNS && ns.kind == SystemNS.PUBLIC)
+			if (ns instanceof Systemns && ns.kind == Systemns.PUBLIC)
 			{
 				const result = names.get(name) ?? null;
 				if (result !== null)
@@ -197,7 +221,7 @@ export class Names
 		return null;
 	}
 
-	set(ns: NS, name: string, trait: any): void
+	set(ns: Ns, name: string, trait: any): void
 	{
 		let names = this.m_dict.get(ns) ?? null;
 		if (names === null)
@@ -222,7 +246,7 @@ export class Names
  */
 export class Class
 {
-	baseClass: Class | null = null;
+	baseclass: Class | null = null;
 	interfaces: Interface[] = [];
 
 	/**
@@ -233,11 +257,11 @@ export class Class
 	dynamic: boolean;
 	metadata: Metadata[];
 
-	readonly staticNames: Names = new Names();
-	readonly esPrototype: any = {};
-	readonly prototypeNames: Names = new Names();
+	readonly staticnames: Names = new Names();
+	readonly ecmaprototype: any = {};
+	readonly prototypenames: Names = new Names();
 
-	readonly staticvarValues: Map<Variable, any> = new Map();
+	readonly staticvarvals: Map<Variable, any> = new Map();
 
 	/**
 	 * Sequence of instance variables.
@@ -257,15 +281,33 @@ export class Class
 		this.metadata = metadata;
 	}
 
-	recursiveDescClassList(): Class[]
+	recursivedescclasslist(): Class[]
 	{
 		const result: Class[] = [this];
-		if (this.baseClass !== null)
+		if (this.baseclass !== null)
 		{
-			result.push.apply(result, this.baseClass!.recursiveDescClassList());
+			result.push.apply(result, this.baseclass!.recursivedescclasslist());
 		}
 		return result;
 	}
+}
+
+export function getclassstaticvarval(className: Name, varName: Name): any
+{
+	const class1 = globalnames.getnsname(className.ns, className.name) as Class;
+	assert(class1 instanceof Class);
+	const varb = class1.staticnames.getnsname(varName.ns, varName.name) as Variable;
+	assert(varb instanceof Variable);
+	return class1.staticvarvals.get(varb);
+}
+
+export function setclassstaticvarval(className: Name, varName: Name, value: any): void
+{
+	const class1 = globalnames.getnsname(className.ns, className.name) as Class;
+	assert(class1 instanceof Class);
+	const varb = class1.staticnames.getnsname(varName.ns, varName.name) as Variable;
+	assert(varb instanceof Variable);
+	class1.staticvarvals.set(varb, value);
 }
 
 /**
@@ -273,7 +315,7 @@ export class Class
  */
 export class Interface
 {
-	baseInterfaces: Interface[] = [];
+	baseinterfaces: Interface[] = [];
 
 	/**
 	 * Fully package qualified name.
@@ -281,7 +323,7 @@ export class Interface
 	name: string;
 	metadata: Metadata[];
 
-	readonly prototypeNames: Names = new Names();
+	readonly prototypenames: Names = new Names();
 
 	constructor(name: string, metadata: Metadata[])
 	{
@@ -289,12 +331,12 @@ export class Interface
 		this.metadata = metadata;
 	}
 	
-	recursiveDescInterfaceList(): Interface[]
+	recursivedescinterfacelist(): Interface[]
 	{
 		const result: Interface[] = [this];
-		for (const itrfc1 of this.baseInterfaces)
+		for (const itrfc1 of this.baseinterfaces)
 		{
-			result.push.apply(result, itrfc1.recursiveDescInterfaceList());
+			result.push.apply(result, itrfc1.recursivedescinterfacelist());
 		}
 		return result;
 	}
@@ -365,56 +407,66 @@ export class Method
 
 	/**
 	 * The main function of a method: if it is overriden by another method,
-	 * then it will not invoke `nodispfn` and will interrupt, invoking
+	 * then it will not invoke `nodisp` and will interrupt, invoking
 	 * the overriding method.
 	 */
-	dispfn: Function;
+	disp: Function;
 
-	nodispfn: Function;
+	nodisp: Function;
 
-	constructor(name: string, metadata: Metadata[], dispfn: Function, nodispfn: Function)
+	constructor(name: string, metadata: Metadata[], disp: Function, nodisp: Function)
 	{
 		this.name = name;
 		this.metadata = metadata;
-		this.dispfn = dispfn;
-		this.nodispfn = nodispfn;
+		this.disp = disp;
+		this.nodisp = nodisp;
 	}
 }
 
 export const globalnames = new Names();
 
-export const globalvarvalues = new Map<Variable, any>();
+export const globalvarvals = new Map<Variable, any>();
 
 export const boundmethods = new Map<Array<any>, Map<Method, Function>>();
 
 /**
  * Checks for `v is T`.
  */
-export function isoftype(instance: Array<any>, type: Class | Interface | null): boolean
+export function isoftype(instance: any, type: Class | Interface | null): boolean
 {
 	// type = null = *
 	// type = [object Class] = a class
 	// type = [object Interface] = an interface
 
-	const instanceClasses = (instance[0] as Class).recursiveDescClassList();
+	if (instance instanceof Array)
+	{
+		const instanceClasses = (instance[0] as Class).recursivedescclasslist();
 
-	if (type instanceof Class)
-	{
-		return instanceClasses.indexOf(type!) !== -1;
-	}
-	if (type instanceof Interface)
-	{
-		for (const class1 of instanceClasses)
+		if (type instanceof Class)
 		{
-			for (const itrfc1 of class1.interfaces)
+			return instanceClasses.indexOf(type!) !== -1;
+		}
+		if (type instanceof Interface)
+		{
+			for (const class1 of instanceClasses)
 			{
-				const itrfcs = itrfc1.recursiveDescInterfaceList();
-				if (itrfcs.indexOf(type!) !== -1)
+				for (const itrfc1 of class1.interfaces)
 				{
-					return true;
+					const itrfcs = itrfc1.recursivedescinterfacelist();
+					if (itrfcs.indexOf(type!) !== -1)
+					{
+						return true;
+					}
 				}
 			}
 		}
+	}
+	if (type instanceof Class)
+	{
+		// (Number, uint, int, float)
+		// String
+		// Boolean
+		check-for-primitive-types;
 	}
 	return type === null;
 }
