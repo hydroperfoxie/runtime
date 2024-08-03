@@ -312,16 +312,31 @@ export class Method
 	 */
 	name: string;
 	metadata: Metadata[];
-	what: What;
 
-	constructor(name: string, metadata: Metadata[], what: What)
+	/**
+	 * The main function of a method: if it is overriden by another method,
+	 * then it will not invoke `nodispfn` and will interrupt.
+	 */
+	dispfn: Function;
+
+	nodispfn: Function;
+
+	constructor(name: string, metadata: Metadata[], dispfn: Function, nodispfn: Function)
 	{
 		this.name = name;
 		this.metadata = metadata;
-		this.what = what;
+		this.dispfn = dispfn;
+		this.nodispfn = nodispfn;
 	}
 }
 
 const globalnames = new Names();
 
 const globalvarvalues = new Map<Variable, any>();
+
+const boundmethods = new Map<Array<any>, Map<Method, Function>>();
+
+function isoftype(instance: Array<any>, type: any): boolean
+{
+	whatever-steps-here;
+}
