@@ -223,6 +223,7 @@ export class Names
 export class Class
 {
 	baseClass: Class | null = null;
+	interfaces: Interface[] = [];
 
 	/**
 	 * Fully package qualified name.
@@ -254,6 +255,48 @@ export class Class
 		this.final = final;
 		this.dynamic = dynamic;
 		this.metadata = metadata;
+	}
+
+	recursiveDescClassList(): Class[]
+	{
+		const result: Class[] = [this];
+		if (this.baseClass !== null)
+		{
+			result.push.apply(result, this.baseClass!.recursiveDescClassList());
+		}
+		return result;
+	}
+}
+
+/**
+ * Encodes certain details of an interface.
+ */
+export class Interface
+{
+	baseInterfaces: Interface[] = [];
+
+	/**
+	 * Fully package qualified name.
+	 */
+	name: string;
+	metadata: Metadata[];
+
+	readonly prototypeNames: Names = new Names();
+
+	constructor(name: string, metadata: Metadata[])
+	{
+		this.name = name;
+		this.metadata = metadata;
+	}
+	
+	recursiveDescInterfaceList(): Interface[]
+	{
+		const result: Interface[] = [this];
+		for (const itrfc1 of this.baseInterfaces)
+		{
+			result.push.apply(result, itrfc1.recursiveDescInterfaceList());
+		}
+		return result;
 	}
 }
 
@@ -345,26 +388,33 @@ const globalvarvalues = new Map<Variable, any>();
 const boundmethods = new Map<Array<any>, Map<Method, Function>>();
 
 /**
- * `v is T`
+ * Checks for `v is T`.
  */
-export function isoftype(instance: Array<any>, type: Class | null): boolean
+export function isoftype(instance: Array<any>, type: Class | Interface | null): boolean
 {
 	// type = null = *
 	// type = [object Class] = a class
-	if (type === null)
+	// type = [object Interface] = an interface
+
+	const instanceClasses = (instance[0] as Class).recursiveDescClassList();
+
+	if (type instanceof Class)
 	{
-		return true;
+		return instanceClasses.indexOf(type!) !== -1;
 	}
-	if (!(type instanceof Class))
+	if (type instanceof Interface)
 	{
-		return false;
+		for (const class1 of instanceClasses)
+		{
+			for (const itrfc1 of class1.interfaces)
+			{
+				const itrfcs = itrfc1.recursiveDescInterfaceList();
+				if (itrfcs.indexOf(type!) !== -1)
+				{
+					return true;
+				}
+			}
+		}
 	}
-	const instanceClasses = [];
-	let x = instance[0] as Class | null;
-	while (x !== null)
-	{
-		instanceClasses.push(x);
-		x = x.baseClass;
-	}
-	return instanceClasses.indexOf(type!) !== -1;
+	return type === null;
 }
