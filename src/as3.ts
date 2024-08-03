@@ -72,7 +72,7 @@ export class Explicitns extends Ns
 	}
 }
 
-class Package
+export class Package
 {
 	/**
 	 * Full name
@@ -268,7 +268,7 @@ export class Names
  * An instance of a dynamic class will have the second element
  * as a Map<any, any> object containing dynamic properties.
  */
-class Class
+export class Class
 {
 	baseclass: any = null;
 	interfaces: Interface[] = [];
@@ -328,7 +328,7 @@ export type ClassOptions =
 	ctor?: Function,
 };
 
-export function defineclass(name: Name, options: ClassOptions, items: [Name, any][]): void
+export function defineclass(name: Name, options: ClassOptions, items: [Name, any][]): Class
 {
 	let finalname = "";
 	if (name.ns instanceof Systemns && name.ns.parent instanceof Package)
@@ -374,12 +374,14 @@ export function defineclass(name: Name, options: ClassOptions, items: [Name, any
 
 	// Finish
 	globalnames.setnsname(name.ns, name.name, class1);
+
+	return class1;
 }
 
 /**
  * Encodes certain details of an interface.
  */
-class Interface
+export class Interface
 {
 	baseinterfaces: Interface[] = [];
 
@@ -423,12 +425,12 @@ export class Metadata
 	}
 }
 
-class PossiblyStatic
+export class PossiblyStatic
 {
 	static: boolean = false;
 }
 
-class Nsalias extends PossiblyStatic
+export class Nsalias extends PossiblyStatic
 {
 	ns: Ns;
 
@@ -439,7 +441,7 @@ class Nsalias extends PossiblyStatic
 	}
 }
 
-class Variable extends PossiblyStatic
+export class Variable extends PossiblyStatic
 {
 	/**
 	 * Fully package qualified name.
@@ -474,7 +476,7 @@ export function variable(options: VariableOptions): Variable
 	return  varb;
 }
 
-class VirtualVariable extends PossiblyStatic
+export class VirtualVariable extends PossiblyStatic
 {
 	/**
 	 * Fully package qualified name.
@@ -537,7 +539,7 @@ const boundmethods = new Map<Array<any>, Map<Method, Function>>();
  */
 export function inobject(base: any, name: string): boolean
 {
-	checks_here;
+	return true;
 }
 
 /**
@@ -548,7 +550,7 @@ export function inobject(base: any, name: string): boolean
  */
 export function hasownproperty(base: any, name: string): boolean
 {
-	checks_here;
+	return true;
 }
 
 /**
