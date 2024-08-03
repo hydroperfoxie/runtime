@@ -252,7 +252,7 @@ export class Names
  */
 export class Class
 {
-	baseclass: Class | null = null;
+	baseclass: any = null;
 	interfaces: Interface[] = [];
 
 	/**
@@ -320,7 +320,7 @@ export function setclassstaticvarval(className: Name, varName: Name, value: any)
 
 export type ClassOptions =
 {
-	extendslist?: Class | null,
+	extendslist?: any,
 	implementslist?: Interface[],
 	final?: boolean,
 	dynamic?: boolean,
@@ -446,9 +446,9 @@ export class Variable extends PossiblyStatic
 	name: string;
 	readonly: boolean;
 	metadata: Metadata[];
- 	type: Class | null;
+ 	type: any;
 
-	constructor(name: string, readonly: boolean, metadata: Metadata[], type: Class | null)
+	constructor(name: string, readonly: boolean, metadata: Metadata[], type: any)
 	{
 		super();
 		this.name = name;
@@ -462,7 +462,7 @@ export type VariableOptions =
 {
 	readonly?: boolean,
 	metadata?: Metadata[],
-	type: Class | null,
+	type: any,
 	static?: boolean,
 };
 
@@ -482,9 +482,9 @@ export class VirtualVariable extends PossiblyStatic
 	getter: Method | null;
 	setter: Method | null;
 	metadata: Metadata[];
- 	type: Class | null;
+ 	type: any;
 
-	constructor(name: string, getter: Method | null, setter: Method | null, metadata: Metadata[], type: Class | null)
+	constructor(name: string, getter: Method | null, setter: Method | null, metadata: Metadata[], type: any)
 	{
 		super();
 		this.name = name;
@@ -531,15 +531,15 @@ export const boundmethods = new Map<Array<any>, Map<Method, Function>>();
 /**
  * Checks for `v is T`.
  */
-export function isoftype(instance: any, type: Class | Interface | null): boolean
+export function istype(value: any, type: any): boolean
 {
 	// type = null = *
 	// type = [object Class] = a class
 	// type = [object Interface] = an interface
 
-	if (instance instanceof Array)
+	if (value instanceof Array)
 	{
-		const instanceClasses = (instance[0] as Class).recursivedescclasslist();
+		const instanceClasses = (value[0] as Class).recursivedescclasslist();
 
 		if (type instanceof Class)
 		{
@@ -563,12 +563,32 @@ export function isoftype(instance: any, type: Class | Interface | null): boolean
 	if (type instanceof Class)
 	{
 		return (
-			(typeof instance === "number" && numberclasses.indexOf(type) !== -1) ||
-			(typeof instance === "string" && type == stringclass) ||
-			(typeof instance === "boolean" && type == booleanclass)
+			(typeof value === "number" && numberclasses.indexOf(type) !== -1) ||
+			(typeof value === "string" && type == stringclass) ||
+			(typeof value === "boolean" && type == booleanclass)
 		);
 	}
 	return type === null;
+}
+
+/**
+ * Performs implicit coercion.
+ */
+export function coerce(value: any, type: any): any
+{
+	if (!istype(value, type))
+	{
+		if (type instanceof Class)
+		{
+			return (
+				floatclasses.indexOf(type) !== -1 ? NaN :
+				integerclasses.indexOf(type) !== -1 ? 0 :
+				type === booleanclass ? false : null
+			);
+		}
+		return null;
+	}
+	return value;
 }
 
 let $publicns = packagens("");
@@ -606,6 +626,8 @@ export const floatclass = defineclass(name($publicns, "float"),
 );
 
 export const numberclasses = [numberclass, intclass, uintclass, floatclass];
+export const floatclasses = [numberclass, floatclass];
+export const integerclasses = [intclass, uintclass];
 
 export const booleanclass = defineclass(name($publicns, "Boolean"),
 	{
