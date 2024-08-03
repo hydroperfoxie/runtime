@@ -3,6 +3,11 @@ import { assert } from "./util";
 export abstract class Ns
 {
 	abstract toString(): string;
+
+	ispublicorinternalns(): boolean
+	{
+		return this instanceof Systemns && (this.kind == Systemns.PUBLIC || this.kind == Systemns.INTERNAL);
+	}
 }
 
 export class Systemns extends Ns
@@ -85,28 +90,6 @@ class Package
 }
 
 const packages = new Map<string, Package>();
-
-export function getpackagevarval(name: Name): any
-{
-	const ns = name.ns as Systemns;
-	assert(ns instanceof Systemns);
-	const pckg = ns.parent as Package;
-	assert(pckg instanceof Package);
-	const varb = pckg.names.getnsname(ns, name.name) as Variable;
-	assert(varb instanceof Variable);
-	return coerce(pckg.varvals.get(varb), varb.type);
-}
-
-export function setpackagevarval(name: Name, value: any): void
-{
-	const ns = name.ns as Systemns;
-	assert(ns instanceof Systemns);
-	const pckg = ns.parent as Package;
-	assert(pckg instanceof Package);
-	const varb = pckg.names.getnsname(ns, name.name) as Variable;
-	assert(varb instanceof Variable);
-	pckg.varvals.set(varb, value);
-}
 
 /**
  * Retrieves the `public` namespace of a package.
@@ -193,6 +176,11 @@ export class Names
 		return result;
 	}
 	
+	hasnsname(ns: Ns, name: string): any
+	{
+		return this.m_dict.get(ns)?.has(name) ?? false;
+	}
+	
 	getnsname(ns: Ns, name: string): any
 	{
 		return this.m_dict.get(ns)?.get(name) ?? null;
@@ -247,10 +235,10 @@ export class Names
  * corresponding to that class, and is used for computing
  * the `constructor` property.
  * 
- * An instance of the a dynamic class will have the second element
- * as a plain JavaScript object containing dynamic properties.
+ * An instance of a dynamic class will have the second element
+ * as a Map<string, any> object containing dynamic properties.
  */
-export class Class
+class Class
 {
 	baseclass: any = null;
 	interfaces: Interface[] = [];
@@ -298,24 +286,6 @@ export class Class
 		}
 		return result;
 	}
-}
-
-export function getclassstaticvarval(className: Name, varName: Name): any
-{
-	const class1 = globalnames.getnsname(className.ns, className.name) as Class;
-	assert(class1 instanceof Class);
-	const varb = class1.staticnames.getnsname(varName.ns, varName.name) as Variable;
-	assert(varb instanceof Variable);
-	return coerce(class1.staticvarvals.get(varb), varb.type);
-}
-
-export function setclassstaticvarval(className: Name, varName: Name, value: any): void
-{
-	const class1 = globalnames.getnsname(className.ns, className.name) as Class;
-	assert(class1 instanceof Class);
-	const varb = class1.staticnames.getnsname(varName.ns, varName.name) as Variable;
-	assert(varb instanceof Variable);
-	class1.staticvarvals.set(varb, value);
 }
 
 export type ClassOptions =
@@ -378,7 +348,7 @@ export function defineclass(name: Name, options: ClassOptions, items: [Name, any
 /**
  * Encodes certain details of an interface.
  */
-export class Interface
+class Interface
 {
 	baseinterfaces: Interface[] = [];
 
@@ -422,12 +392,12 @@ export class Metadata
 	}
 }
 
-export class PossiblyStatic
+class PossiblyStatic
 {
 	static: boolean = false;
 }
 
-export class Nsalias extends PossiblyStatic
+class Nsalias extends PossiblyStatic
 {
 	ns: Ns;
 
@@ -438,7 +408,7 @@ export class Nsalias extends PossiblyStatic
 	}
 }
 
-export class Variable extends PossiblyStatic
+class Variable extends PossiblyStatic
 {
 	/**
 	 * Fully package qualified name.
@@ -473,7 +443,7 @@ export function variable(options: VariableOptions): Variable
 	return  varb;
 }
 
-export class VirtualVariable extends PossiblyStatic
+class VirtualVariable extends PossiblyStatic
 {
 	/**
 	 * Fully package qualified name.
@@ -522,11 +492,35 @@ export class Method extends PossiblyStatic
 	}
 }
 
-export const globalnames = new Names();
+const globalnames = new Names();
 
-export const globalvarvals = new Map<Variable, any>();
+const globalvarvals = new Map<Variable, any>();
 
-export const boundmethods = new Map<Array<any>, Map<Method, Function>>();
+const boundmethods = new Map<Array<any>, Map<Method, Function>>();
+
+export function hasname(base1: any, name: Name): boolean
+{
+	if (!(base1 instanceof Array))
+	{
+		return false;
+	}
+	const base = base1 as Array<any>;
+	const class1 = base[0] as Class;
+	if (class1.dynamic && name.ns.ispublicorinternalns())
+	{
+		return (base[1] as Map<string, any>).has(name.name);
+	}
+	let classb = class1;
+	while (classb !== null)
+	{
+		if (classb.prototypenames.hasnsname(name.ns, name.name))
+		{
+			return true;
+		}
+		classb = classb.baseclass;
+	}
+	return false;
+}
 
 /**
  * Checks for `v is T`.
