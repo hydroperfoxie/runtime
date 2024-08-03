@@ -376,6 +376,18 @@ export class Variable
 	}
 }
 
+export type VariableOptions =
+{
+	readonly?: boolean,
+	metadata?: Metadata[],
+	type: Class | null,
+};
+
+export function variable(options: VariableOptions): Variable
+{
+	return new Variable("", options.readonly ?? false, options.metadata ?? [], options.type);
+}
+
 export class VirtualVariable
 {
 	/**
