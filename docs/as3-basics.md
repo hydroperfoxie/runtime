@@ -14,7 +14,7 @@ For classes that are not dynamic, the second and consecutive elements are always
 
 ## Primitive values
 
-The Number, uint, int, and float data types are always represented as a normal JavaScript number.
+The Number, uint, int, and float data types are always represented as normal JavaScript numbers.
 
 The Boolean data type is always represented as a normal JavaScript boolean.
 
