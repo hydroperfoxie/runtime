@@ -539,7 +539,7 @@ const boundmethods = new Map<Array<any>, Map<Method, Function>>();
  */
 export function inobject(base: any, name: string): boolean
 {
-	return true;
+	checks_here;
 }
 
 /**
@@ -550,7 +550,7 @@ export function inobject(base: any, name: string): boolean
  */
 export function hasownproperty(base: any, name: string): boolean
 {
-	return true;
+	checks_here;
 }
 
 /**
