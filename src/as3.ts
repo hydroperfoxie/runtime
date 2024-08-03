@@ -94,7 +94,7 @@ export function getpackagevarval(name: Name): any
 	assert(pckg instanceof Package);
 	const varb = pckg.names.getnsname(ns, name.name) as Variable;
 	assert(varb instanceof Variable);
-	return pckg.varvals.get(varb);
+	return coerce(pckg.varvals.get(varb), varb.type);
 }
 
 export function setpackagevarval(name: Name, value: any): void
@@ -306,7 +306,7 @@ export function getclassstaticvarval(className: Name, varName: Name): any
 	assert(class1 instanceof Class);
 	const varb = class1.staticnames.getnsname(varName.ns, varName.name) as Variable;
 	assert(varb instanceof Variable);
-	return class1.staticvarvals.get(varb);
+	return coerce(class1.staticvarvals.get(varb), varb.type);
 }
 
 export function setclassstaticvarval(className: Name, varName: Name, value: any): void
@@ -581,6 +581,7 @@ export function coerce(value: any, type: any): any
 		if (type instanceof Class)
 		{
 			return (
+				type === objectclass && typeof value === "undefined" ? undefined :
 				floatclasses.indexOf(type) !== -1 ? NaN :
 				integerclasses.indexOf(type) !== -1 ? 0 :
 				type === booleanclass ? false : null
@@ -592,6 +593,14 @@ export function coerce(value: any, type: any): any
 }
 
 let $publicns = packagens("");
+
+export const objectclass = defineclass(name($publicns, "Object"),
+	{
+		dynamic: true,
+	},
+	[
+	]
+);
 
 export const numberclass = defineclass(name($publicns, "Number"),
 	{
