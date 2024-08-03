@@ -381,11 +381,11 @@ export class Method
 	}
 }
 
-const globalnames = new Names();
+export const globalnames = new Names();
 
-const globalvarvalues = new Map<Variable, any>();
+export const globalvarvalues = new Map<Variable, any>();
 
-const boundmethods = new Map<Array<any>, Map<Method, Function>>();
+export const boundmethods = new Map<Array<any>, Map<Method, Function>>();
 
 /**
  * Checks for `v is T`.
