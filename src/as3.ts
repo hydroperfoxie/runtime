@@ -463,14 +463,12 @@ export function isoftype(instance: any, type: Class | Interface | null): boolean
 	}
 	if (type instanceof Class)
 	{
-		/*
 		// (Number, uint, int, float)
 		check-for-number
 		// String
 		check-for-string;
 		// Boolean
 		check-for-boolean;
-		*/
 	}
 	return type === null;
 }
