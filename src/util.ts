@@ -138,4 +138,29 @@ export class FlexDoubleVector
         assertNotFixedVectorError(this.m_fixed);
         return this.m_length == 0 ? 0 : this.m_array[--this.m_length];
     }
+
+    unshift(...args: [number]): number
+    {
+        fix-me;
+    }
+
+    removeAt(index: number): number
+    {
+        fix-me;
+    }
+    
+    splice(startIndex: number, deleteCount: number = 0xFFFFFFFF, ...items: [number]): FlexDoubleVector
+    {
+        fix-me;
+    }
+
+    slice(startIndex: number = 0, endIndex: number = 0x7FFFFFFF): FlexDoubleVector
+    {
+        fix-me;
+    }
+    
+    sort(sortBehavior: any): FlexDoubleVector
+    {
+        fix-me;
+    }
 }
