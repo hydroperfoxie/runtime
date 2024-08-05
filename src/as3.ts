@@ -1,4 +1,4 @@
-import { assert, FlexDoubleVector } from "./util";
+import { assert, FlexVector } from "./util";
 
 const ARRAY_SUBARRAY_INDEX = 2;
 const VECTOR_SUBARRAY_INDEX = 2;
@@ -734,7 +734,7 @@ export const vectordoubleclass = defineclass(name($publicns, "Vector$double"),
     {
         ctor(this: any, length: number = 0, fixed: boolean = false)
         {
-            this[VECTOR_SUBARRAY_INDEX] = new FlexDoubleVector(Number(length), fixed);
+            this[VECTOR_SUBARRAY_INDEX] = new FlexVector(Float64Array, Number(length), fixed);
         },
     },
     [
@@ -743,6 +743,10 @@ export const vectordoubleclass = defineclass(name($publicns, "Vector$double"),
 
 export const vectorfloatclass = defineclass(name($publicns, "Vector$float"),
     {
+        ctor(this: any, length: number = 0, fixed: boolean = false)
+        {
+            this[VECTOR_SUBARRAY_INDEX] = new FlexVector(Float32Array, Number(length), fixed);
+        },
     },
     [
     ]
@@ -750,6 +754,10 @@ export const vectorfloatclass = defineclass(name($publicns, "Vector$float"),
 
 export const vectorintclass = defineclass(name($publicns, "Vector$int"),
     {
+        ctor(this: any, length: number = 0, fixed: boolean = false)
+        {
+            this[VECTOR_SUBARRAY_INDEX] = new FlexVector(Int32Array, Number(length), fixed);
+        },
     },
     [
     ]
@@ -757,6 +765,10 @@ export const vectorintclass = defineclass(name($publicns, "Vector$int"),
 
 export const vectoruintclass = defineclass(name($publicns, "Vector$uint"),
     {
+        ctor(this: any, length: number = 0, fixed: boolean = false)
+        {
+            this[VECTOR_SUBARRAY_INDEX] = new FlexVector(Uint32Array, Number(length), fixed);
+        },
     },
     [
     ]

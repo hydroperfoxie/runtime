@@ -10,31 +10,33 @@ const INITIAL_CAPACITY = 3;
 
 function assertNotFixedVectorError(value: boolean): void
 {
-    if (!value)
+    if (value)
     {
         throw new RangeError("The fixed property is set to true.");
     }
 }
 
-export class FlexDoubleVector
+export class FlexVector
 {
-    private m_array: Float64Array;
+    private typedArrayConstructor: new (arg: any) => any;
+    private m_array: any;
     private m_length: number = 0;
     private m_fixed: boolean;
 
-    constructor(argument: number | Float64Array = 0, fixed: boolean = false)
+    constructor(typedArrayConstructor: new () => any, argument: any = 0, fixed: boolean = false)
     {
+        this.typedArrayConstructor = typedArrayConstructor;
         if (typeof argument == "number")
         {
             argument = Math.max(0, argument >>> 0);
-            this.m_array = new Float64Array(Math.max(INITIAL_CAPACITY, argument));
+            this.m_array = new this.typedArrayConstructor(Math.max(INITIAL_CAPACITY, argument));
             this.m_length = argument;
         }
         else
         {
             if (argument.length == 0)
             {
-                this.m_array = new Float64Array(INITIAL_CAPACITY);
+                this.m_array = new this.typedArrayConstructor(INITIAL_CAPACITY);
                 this.m_length = 0;
             } else {
                 this.m_array = argument.slice(0);
@@ -76,13 +78,13 @@ export class FlexDoubleVector
         if (value > this.m_array.length)
         {
             const k = this.m_array;
-            this.m_array = new Float64Array(k.length + (value - k.length));
+            this.m_array = new this.typedArrayConstructor(k.length + (value - k.length));
             this.m_array.set(k.subarray(0, k.length));
             this.m_length = value;
         }
         else if (value == 0)
         {
-            this.m_array = new Float64Array(INITIAL_CAPACITY);
+            this.m_array = new this.typedArrayConstructor(INITIAL_CAPACITY);
             this.m_length = 0;
         }
         else
@@ -132,24 +134,89 @@ export class FlexDoubleVector
         }
         this.m_array[index] = value;
     }
-    
-    push(value: number): void
+
+    includes(item: number): boolean
+    {
+        return this.indexOf(item) != -1;
+    }
+
+    concat(...args: FlexVector[]): FlexVector
+    {
+        const result = this.slice(0);
+        for (const arg of args)
+        {
+            const appendice = arg.m_array;
+            const k = result.m_array;
+            const kmlen = result.m_length;
+            result.m_length += appendice.length;
+            let newCapacity = kmlen;
+            newCapacity = newCapacity < result.m_length ? result.m_length : newCapacity;
+            result.m_array = new this.typedArrayConstructor(newCapacity);
+            result.m_array.set(k.subarray(0, kmlen));
+            result.m_array.set(appendice, kmlen);
+        }
+        return result;
+    }
+
+    push(...args: number[]): number
     {
         assertNotFixedVectorError(this.m_fixed);
+        args = args instanceof Array ? args : [];
+        args = args.map(v => Number(v));
+        if (args.length == 1)
+        {
+            this._push1(args[0]);
+        }
+        else
+        {
+            const appendice = new this.typedArrayConstructor(args);
+            const k = this.m_array;
+            const kmlen = this.m_length;
+            this.m_length += appendice.length;
+            let newCapacity = kmlen;
+            newCapacity = newCapacity < this.m_length ? this.m_length : newCapacity;
+            this.m_array = new this.typedArrayConstructor(newCapacity);
+            this.m_array.set(k.subarray(0, kmlen));
+            this.m_array.set(appendice, kmlen);
+        }
+        return this.m_length;
+    }
+
+    private _push1(value: number): void
+    {
         const i = this.m_length++;
         if (i >= this.m_array.length)
         {
             const k = this.m_array;
-            this.m_array = new Float64Array(k.length * 2);
+            this.m_array = new this.typedArrayConstructor(k.length * 2);
             this.m_array.set(k.subarray(0, i));
         }
         this.m_array[i] = Number(value);
+    }
+
+    shift(): number
+    {
+        assertNotFixedVectorError(this.m_fixed);
+        if (this.m_length == 0)
+        {
+            return 0;
+        }
+        const k = this.m_array;
+        this.m_length--;
+        this.m_array = new this.typedArrayConstructor(k.length);
+        this.m_array.set(k.subarray(1, this.m_length + 1));
+        return k[0];
     }
 
     pop(): number
     {
         assertNotFixedVectorError(this.m_fixed);
         return this.m_length == 0 ? 0 : this.m_array[--this.m_length];
+    }
+
+    join(sep: string = ","): string
+    {
+        return this.m_array.join(sep);
     }
 
     unshift(...args: number[]): number
@@ -165,16 +232,30 @@ export class FlexDoubleVector
         const kmlen = this.m_length;
         this.m_length += args.length;
         let newCapacity = k.length;
-        newCapacity = newCapacity < this.m_length ? this.m_length : newCapacity;
-        this.m_array = new Float64Array(newCapacity);
-        this.m_array.set(new Float64Array(args), 0);
+        newCapacity = newCapacity < this.m_length ? newCapacity * 2 : newCapacity;
+        this.m_array = new this.typedArrayConstructor(newCapacity);
+        this.m_array.set(new this.typedArrayConstructor(args), 0);
         this.m_array.set(k.subarray(0, kmlen), args.length);
         return this.m_length;
     }
 
     insertAt(index: number, element: number): void
     {
-        fix-me;
+        assertNotFixedVectorError(this.m_fixed);
+        index = Math.max(0, index >>> 0);
+        element = Number(element);
+        if (index >= this.m_length)
+        {
+            throw new RangeError("Index out of bounds.");
+        }
+        const k = this.m_array;
+        this.m_length++;
+        let newCapacity = k.length;
+        newCapacity = newCapacity < this.m_length ? newCapacity * 2 : newCapacity;
+        this.m_array = new this.typedArrayConstructor(k.length);
+        this.m_array.set(k.subarray(0, index));
+        this.m_array[index] = element;
+        this.m_array.set(k.subarray(index, this.m_length), index + 1);
     }
 
     removeAt(index: number): number
@@ -188,13 +269,13 @@ export class FlexDoubleVector
         const r = this.m_array[index];
         const k = this.m_array;
         this.m_length--;
-        this.m_array = new Float64Array(k.length);
+        this.m_array = new this.typedArrayConstructor(k.length);
         this.m_array.set(k.subarray(0, index));
         this.m_array.set(k.subarray(index + 1, this.m_length + 1), index);
         return r;
     }
     
-    splice(startIndex: number, deleteCount: number = 0xFFFFFFFF, ...items: number[]): FlexDoubleVector
+    splice(startIndex: number, deleteCount: number = 0xFFFFFFFF, ...items: number[]): FlexVector
     {
         assertNotFixedVectorError(this.m_fixed);
 
@@ -217,26 +298,31 @@ export class FlexDoubleVector
         this.m_length = kmlen - deleteCount + items.length;
         let newCapacity = k.length;
         newCapacity = newCapacity < this.m_length ? this.m_length : newCapacity;
-        this.m_array = new Float64Array(newCapacity);
+        this.m_array = new this.typedArrayConstructor(newCapacity);
         this.m_array.set(k.subarray(0, startIndex));
         this.m_array.set(k.subarray(startIndex + deleteCount, kmlen), startIndex);
         const r = k.slice(startIndex, startIndex + deleteCount);
-        this.m_array.set(new Float64Array(items), kmlen - deleteCount);
-        return new FlexDoubleVector(r);
+        this.m_array.set(new this.typedArrayConstructor(items), kmlen - deleteCount);
+        return new FlexVector(r);
     }
 
-    slice(startIndex: number = 0, endIndex: number = 0x7FFFFFFF): FlexDoubleVector
+    slice(startIndex: number = 0, endIndex: number = 0x7FFFFFFF): FlexVector
     {
         startIndex = Math.max(0, startIndex >>> 0);
         endIndex = Math.max(0, endIndex >>> 0);
         startIndex = this.hasIndex(startIndex) ? startIndex : this.m_length;
         endIndex = endIndex < startIndex ? startIndex : endIndex;
-        return new FlexDoubleVector(this.m_array.slice(startIndex, endIndex));
+        return new FlexVector(this.m_array.slice(startIndex, endIndex));
     }
     
-    sort(sortBehavior: any): FlexDoubleVector
+    sort(sortBehavior: any): FlexVector
     {
         this.m_array.sort(sortBehavior);
+        return this;
+    }
+
+    reverse(): FlexVector {
+        this.m_array.reverse();
         return this;
     }
 
