@@ -66,6 +66,12 @@ export class FlexDoubleVector
 
     set length(value: number)
     {
+        value = Number(value);
+        if (value == this.m_length)
+        {
+            return;
+        }
+        assertNotFixedVectorError(this.m_fixed);
         value = Math.max(0, value >>> 0);
         if (value > this.m_array.length)
         {
@@ -93,16 +99,18 @@ export class FlexDoubleVector
 
     set fixed(value: boolean)
     {
-        this.m_fixed = value;
+        this.m_fixed = !!value;
     }
 
     hasIndex(index: number): boolean
     {
+        index = Math.max(0, index >>> 0);
         return index < this.m_length;
     }
 
     get(index: number): number
     {
+        index = Math.max(0, index >>> 0);
         return index < this.m_length ? this.m_array[index] : 0;
     }
 
@@ -111,12 +119,17 @@ export class FlexDoubleVector
      */
     set(index: number, value: number): void
     {
+        index = Math.max(0, index >>> 0);
+        value = Number(value);
         if (index == this.m_length)
         {
             assertNotFixedVectorError(this.m_fixed);
             this.push(value);
         }
-        assert(index < this.m_length);
+        if (index >= this.m_length)
+        {
+            throw new RangeError("Index out of bounds.");
+        }
         this.m_array[index] = value;
     }
     
@@ -130,7 +143,7 @@ export class FlexDoubleVector
             this.m_array = new Float64Array(k.length * 2);
             this.m_array.set(k.subarray(0, i));
         }
-        this.m_array[i] = value;
+        this.m_array[i] = Number(value);
     }
 
     pop(): number
@@ -139,14 +152,40 @@ export class FlexDoubleVector
         return this.m_length == 0 ? 0 : this.m_array[--this.m_length];
     }
 
-    unshift(...args: [number]): number
+    unshift(...args: number[]): number
     {
-        fix-me;
+        assertNotFixedVectorError(this.m_fixed);
+        args = args instanceof Array ? args : [];
+        args = args.map(v => Number(v));
+        if (args.length == 0)
+        {
+            return this.m_length;
+        }
+        const kmlen = this.m_length;
+        this.m_length += args.length;
+        let newCapacity = this.m_array.length;
+        newCapacity = newCapacity < this.m_length ? this.m_length : newCapacity;
+        const k = this.m_array;
+        this.m_array = new Float64Array(newCapacity);
+        this.m_array.set(new Float64Array(args), 0);
+        this.m_array.set(k.subarray(0, kmlen), args.length);
+        return this.m_length;
     }
 
     removeAt(index: number): number
     {
-        fix-me;
+        assertNotFixedVectorError(this.m_fixed);
+        index = Math.max(0, index >>> 0);
+        if (index >= this.m_length)
+        {
+            throw new RangeError("Index out of bounds.");
+        }
+        const r = this.m_array[index];
+        const k = this.m_array;
+        this.m_array = new Float64Array(--this.m_length);
+        this.m_array.set(k.subarray(0, index));
+        this.m_array.set(k.subarray(index + 1, this.m_length + 1));
+        return r;
     }
     
     splice(startIndex: number, deleteCount: number = 0xFFFFFFFF, ...items: [number]): FlexDoubleVector
@@ -162,5 +201,25 @@ export class FlexDoubleVector
     sort(sortBehavior: any): FlexDoubleVector
     {
         fix-me;
+    }
+
+    indexOf(searchElement: number, fromIndex: number = 0): number
+    {
+        fix-me;
+    }
+
+    lastIndexOf(searchElement: number, fromIndex: number = 0): number
+    {
+        fix-me;
+    }
+
+    toString(): string
+    {
+        return this.m_array.toString();
+    }
+
+    toLocaleString(): string
+    {
+        return this.m_array.toLocaleString();
     }
 }
