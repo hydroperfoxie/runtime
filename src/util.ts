@@ -161,11 +161,11 @@ export class FlexDoubleVector
         {
             return this.m_length;
         }
+        const k = this.m_array;
         const kmlen = this.m_length;
         this.m_length += args.length;
-        let newCapacity = this.m_array.length;
+        let newCapacity = k.length;
         newCapacity = newCapacity < this.m_length ? this.m_length : newCapacity;
-        const k = this.m_array;
         this.m_array = new Float64Array(newCapacity);
         this.m_array.set(new Float64Array(args), 0);
         this.m_array.set(k.subarray(0, kmlen), args.length);
@@ -182,15 +182,42 @@ export class FlexDoubleVector
         }
         const r = this.m_array[index];
         const k = this.m_array;
-        this.m_array = new Float64Array(--this.m_length);
+        this.m_length--;
+        this.m_array = new Float64Array(k.length);
         this.m_array.set(k.subarray(0, index));
-        this.m_array.set(k.subarray(index + 1, this.m_length + 1));
+        this.m_array.set(k.subarray(index + 1, this.m_length + 1), index);
         return r;
     }
     
-    splice(startIndex: number, deleteCount: number = 0xFFFFFFFF, ...items: [number]): FlexDoubleVector
+    splice(startIndex: number, deleteCount: number = 0xFFFFFFFF, ...items: number[]): FlexDoubleVector
     {
-        fix-me;
+        assertNotFixedVectorError(this.m_fixed);
+
+        startIndex = Math.max(0, startIndex >>> 0);
+        deleteCount = Math.max(0, deleteCount >>> 0);
+        items = items instanceof Array ? items : [];
+        items = items.map(v => Number(v));
+
+        if (startIndex >= this.m_length)
+        {
+            throw new RangeError("Index out of bounds.");
+        }
+        if (startIndex + deleteCount > this.m_length)
+        {
+            deleteCount = this.m_length - startIndex;
+        }
+
+        const k = this.m_array;
+        const kmlen = this.m_length;
+        this.m_length = kmlen - deleteCount + items.length;
+        let newCapacity = k.length;
+        newCapacity = newCapacity < this.m_length ? this.m_length : newCapacity;
+        this.m_array = new Float64Array(newCapacity);
+        this.m_array.set(k.subarray(0, startIndex));
+        this.m_array.set(k.subarray(startIndex + deleteCount, kmlen), startIndex);
+        const r = k.slice(startIndex, startIndex + deleteCount);
+        this.m_array.set(new Float64Array(items), kmlen - deleteCount);
+        return new FlexDoubleVector(r);
     }
 
     slice(startIndex: number = 0, endIndex: number = 0x7FFFFFFF): FlexDoubleVector
