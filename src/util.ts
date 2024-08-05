@@ -172,6 +172,11 @@ export class FlexDoubleVector
         return this.m_length;
     }
 
+    insertAt(index: number, element: number): void
+    {
+        fix-me;
+    }
+
     removeAt(index: number): number
     {
         assertNotFixedVectorError(this.m_fixed);
@@ -222,22 +227,33 @@ export class FlexDoubleVector
 
     slice(startIndex: number = 0, endIndex: number = 0x7FFFFFFF): FlexDoubleVector
     {
-        fix-me;
+        startIndex = Math.max(0, startIndex >>> 0);
+        endIndex = Math.max(0, endIndex >>> 0);
+        startIndex = this.hasIndex(startIndex) ? startIndex : this.m_length;
+        endIndex = endIndex < startIndex ? startIndex : endIndex;
+        return new FlexDoubleVector(this.m_array.slice(startIndex, endIndex));
     }
     
     sort(sortBehavior: any): FlexDoubleVector
     {
-        fix-me;
+        this.m_array.sort(sortBehavior);
+        return this;
     }
 
     indexOf(searchElement: number, fromIndex: number = 0): number
     {
-        fix-me;
+        searchElement = Number(searchElement);
+        fromIndex = Math.max(0, fromIndex >>> 0);
+        fromIndex = this.hasIndex(fromIndex) ? fromIndex : this.m_length;
+        return this.m_array.indexOf(searchElement, fromIndex);
     }
 
     lastIndexOf(searchElement: number, fromIndex: number = 0): number
     {
-        fix-me;
+        searchElement = Number(searchElement);
+        fromIndex = Math.max(0, fromIndex >>> 0);
+        fromIndex = this.hasIndex(fromIndex) ? fromIndex : this.m_length;
+        return this.m_array.lastIndexOf(searchElement, fromIndex);
     }
 
     toString(): string
