@@ -550,17 +550,6 @@ const boundmethods = new Map<Array<any>, Map<Method, Function>>();
  */
 export function inobject(base: any, name: any): boolean
 {
-    checks_here;
-}
-
-/**
- * Checks whether an object owns a given property name or key.
- * 
- * This method looks for Array element indices and own variables,
- * either for a base class or for a base instance.
- */
-export function hasownproperty(base: any, name: any): boolean
-{
     if (base instanceof Array)
     {
         const ctor = base[CONSTRUCTOR_INDEX] as Class;
@@ -574,12 +563,16 @@ export function hasownproperty(base: any, name: any): boolean
         let c1 = ctor;
         while (c1 !== null)
         {
-            let varb = c1.prototypenames.getpublicname(String(name));
-            if (varb instanceof Variable)
+            if (c1.prototypenames.haspublicname(String(name)))
             {
                 return true;
             }
-            c1 = ctor.baseclass;
+            // ECMAScript 3 prototype
+            if (Object.prototype.hasOwnProperty.apply(c1.ecmaprototype, [String(name)]))
+            {
+                return true;
+            }
+            c1 = c1.baseclass;
         }
         // Test collection properties (Array, Vector[$double|$float|$int|$uint], Dictionary)
         if (istype(base, arrayclass))
@@ -640,6 +633,124 @@ export function hasownproperty(base: any, name: any): boolean
         {
             return base[DICTIONARY_PROPERTIES_INDEX].has(name);
         }
+    }
+    // Class static
+    if (base instanceof Class)
+    {
+        if (String(name) == "prototype")
+        {
+            return true;
+        }
+        let c1 = base;
+        while (c1 !== null)
+        {
+            if (c1.prototypenames.haspublicname(String(name)))
+            {
+                return true;
+            }
+            c1 = c1.baseclass;
+        }
+    }
+    return false;
+}
+
+/**
+ * Checks whether an object owns a given property name or key.
+ * 
+ * This method looks for Array element indices and own variables,
+ * either for a base class or for a base instance.
+ */
+export function hasownproperty(base: any, name: any): boolean
+{
+    if (base instanceof Array)
+    {
+        const ctor = base[CONSTRUCTOR_INDEX] as Class;
+        if (ctor.dynamic)
+        {
+            if (base[DYNAMIC_PROPERTIES_INDEX].has(String(name)))
+            {
+                return true;
+            }
+        }
+        let c1 = ctor;
+        while (c1 !== null)
+        {
+            let varb = c1.prototypenames.getpublicname(String(name));
+            if (varb instanceof Variable)
+            {
+                return true;
+            }
+            c1 = c1.baseclass;
+        }
+        // Test collection properties (Array, Vector[$double|$float|$int|$uint], Dictionary)
+        if (istype(base, arrayclass))
+        {
+            if (Number(name) != name >> 0)
+            {
+                return false;
+            }
+            let i = name >> 0;
+            return i >= 0 && i < base[ARRAY_SUBARRAY_INDEX].length;
+        }
+        if (istype(base, vectorclass))
+        {
+            if (Number(name) != name >> 0)
+            {
+                return false;
+            }
+            let i = name >> 0;
+            return i >= 0 && i < base[VECTOR_SUBARRAY_INDEX].length;
+        }
+        if (istype(base, vectordoubleclass))
+        {
+            if (Number(name) != name >> 0)
+            {
+                return false;
+            }
+            let i = name >> 0;
+            return i >= 0 && i < base[VECTOR_SUBARRAY_INDEX].length;
+        }
+        if (istype(base, vectorfloatclass))
+        {
+            if (Number(name) != name >> 0)
+            {
+                return false;
+            }
+            let i = name >> 0;
+            return i >= 0 && i < base[VECTOR_SUBARRAY_INDEX].length;
+        }
+        if (istype(base, vectorintclass))
+        {
+            if (Number(name) != name >> 0)
+            {
+                return false;
+            }
+            let i = name >> 0;
+            return i >= 0 && i < base[VECTOR_SUBARRAY_INDEX].length;
+        }
+        if (istype(base, vectoruintclass))
+        {
+            if (Number(name) != name >> 0)
+            {
+                return false;
+            }
+            let i = name >> 0;
+            return i >= 0 && i < base[VECTOR_SUBARRAY_INDEX].length;
+        }
+        if (istype(base, dictionaryclass))
+        {
+            return base[DICTIONARY_PROPERTIES_INDEX].has(name);
+        }
+    }
+    // Class static
+    if (base instanceof Class)
+    {
+        if (String(name) == "prototype")
+        {
+            return true;
+        }
+        let varb = base.staticnames.getpublicname(String(name));
+        return varb instanceof Variable;
     }
     return false;
 }
