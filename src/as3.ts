@@ -13,6 +13,14 @@ const DICTIONARY_PROPERTIES_INDEX = 1;
 
 const CLASS_CLASS_INDEX = 1;
 
+const NAMESPACE_PREFIX_INDEX = 1;
+const NAMESPACE_URI_INDEX = 2;
+
+const QNAME_URI_INDEX = 1;
+const QNAME_LOCALNAME_INDEX = 2;
+
+const FUNCTION_FUNCTION_INDEX = 1;
+
 export abstract class Ns
 {
     abstract toString(): string;
@@ -617,7 +625,10 @@ const globalnames = new Names();
 
 const globalvarvals = new Map<Variable, any>();
 
-const boundmethods = new Map<Array<any>, Map<Method, Function>>();
+/**
+ * Maps (instance) to (method) to (bound method Function instance).
+ */
+const boundmethods = new Map<Array<any>, Map<Method, any>>();
 
 /**
  * Checks whether an object has or inherits a given property name.
@@ -961,6 +972,18 @@ export function coerce(value: any, type: any): any
     return value;
 }
 
+/**
+ * The `AS3` namespace.
+ */
+export const as3ns = packagens("http://adobe.com/AS3/2006/builtin");
+
+/**
+ * The `flash_proxy` namespace.
+ */
+export const flashproxyns = packagens("http://www.adobe.com/2006/actionscript/flash/proxy");
+
+// ----- Globals -----
+
 let $publicns = packagens("");
 
 export const objectclass = defineclass(name($publicns, "Object"),
@@ -971,9 +994,63 @@ export const objectclass = defineclass(name($publicns, "Object"),
     ]
 );
 
+// Namespace(prefix:String, uri:String)
 export const namespaceclass = defineclass(name($publicns, "Namespace"),
     {
         final: true,
+        ctor(this: any, arg1: any, arg2: any = undefined)
+        {
+            this[NAMESPACE_PREFIX_INDEX] =
+            this[NAMESPACE_URI_INDEX] = "";
+
+            if (typeof arg2 === "undefined")
+            {
+                if (istype(arg1, namespaceclass))
+                {
+                    this[NAMESPACE_URI_INDEX] = arg1[NAMESPACE_URI_INDEX];
+                }
+                else if (istype(arg1, qnameclass))
+                {
+                    this[NAMESPACE_URI_INDEX] = arg1[QNAME_URI_INDEX];
+                }
+                else
+                {
+                    this[NAMESPACE_URI_INDEX] = String(arg1);
+                }
+            }
+            else
+            {
+                // arg1 = prefixValue
+                if (typeof arg1 === "undefined")
+                {
+                    this[NAMESPACE_PREFIX_INDEX] = "undefined";
+                }
+                else
+                {
+                    this[NAMESPACE_PREFIX_INDEX] = fix-me;
+                    fix-me;
+                }
+
+                // arg2 = uriValue
+                this[NAMESPACE_URI_INDEX] = fix-me;
+            }
+        },
+    },
+    [
+    ]
+);
+
+// QName(uri:String, localName:String)
+export const qnameclass = defineclass(name($publicns, "QName"),
+    {
+        final: true,
+        ctor(this: any, arg1: any, arg2: any = undefined)
+        {
+            this[QNAME_URI_INDEX] =
+            this[QNAME_LOCALNAME_INDEX] = "";
+
+            fix-me;
+        },
     },
     [
     ]
@@ -981,9 +1058,9 @@ export const namespaceclass = defineclass(name($publicns, "Namespace"),
 
 export const classclass = defineclass(name($publicns, "Class"),
     {
-        ctor(this: any, classobj: Class)
+        ctor(this: any)
         {
-            this[CLASS_CLASS_INDEX] = classobj;
+            this[CLASS_CLASS_INDEX] = classclass;
         },
     },
     [
@@ -1050,6 +1127,21 @@ export const arrayclass = defineclass(name($publicns, "Array"),
         {
             this[DYNAMIC_PROPERTIES_INDEX] = new Map<any, any>();
             this[ARRAY_SUBARRAY_INDEX] = new Array(Math.max(0, length >>> 0));
+        },
+    },
+    [
+    ]
+);
+
+function mdefaultfunction() {}
+
+export const functionclass = defineclass(name($publicns, "Function"),
+    {
+        final: true,
+
+        ctor(this: any)
+        {
+            this[FUNCTION_FUNCTION_INDEX] = mdefaultfunction;
         },
     },
     [

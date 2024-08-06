@@ -8,7 +8,7 @@
   },
   "scripts": {
     "build": "rollup --config",
-    "doc": "npx typedoc --options typedoc.json",
+    "doc": "npx typedoc --options typedoc.json --theme ig-typedoc-theme",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -24,7 +24,11 @@
   "devDependencies": {
     "@rollup/plugin-terser": "^0.4.4",
     "@types/node": "^22.1.0",
+    "ig-typedoc-theme": "^5.0.4",
     "rollup": "^4.19.2",
     "typedoc": "^0.26.5"
+  },
+  "dependencies": {
+    "@xmldom/xmldom": "^0.8.10"
   }
 }

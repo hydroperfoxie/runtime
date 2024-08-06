@@ -5,6 +5,10 @@
 - defineglobalvirtualvar()
 - defineglobalmethod()
 
+Constructor operations:
+
+- [ ] construct
+
 Property operations:
 
 - [x] hasownproperty
@@ -34,7 +38,9 @@ Define the following ActionScript 3 classes and properties:
 - [ ] `Infinity`
 - [ ] `Object`
 - [ ] `Class`
+- [ ] `Function`
 - [ ] `Namespace`
+- [ ] `QName`
 - [ ] `Number`
 - [ ] `uint`
 - [ ] `int`
@@ -48,3 +54,20 @@ Define the following ActionScript 3 classes and properties:
 - [ ] `__AS3__.vec.Vector$float`
 - [ ] `__AS3__.vec.Vector$int`
 - [ ] `__AS3__.vec.Vector$uint`
+
+## E4X
+
+Use the NPM package [`@xmldom/xmldom`](https://www.npmjs.com/package/@xmldom/xmldom) for the E4X implementation.
+
+```ts
+import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
+
+const source = `<xml xmlns="a">
+	<child>test</child>
+	<child/>
+</xml>`;
+
+const doc: XMLDocument = new DOMParser().parseFromString(source, "text/xml");
+
+const serialized = new XMLSerializer().serializeToString(doc);
+```
