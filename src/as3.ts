@@ -1,7 +1,9 @@
 import { assert, FlexVector } from "./util";
 
+const CONSTRUCTOR_INDEX = 0;
+const ARRAY_DYNAMIC_PROPERTIES_INDEX = 1;
 const ARRAY_SUBARRAY_INDEX = 2;
-const VECTOR_SUBARRAY_INDEX = 2;
+const VECTOR_SUBARRAY_INDEX = 1;
 const VECTOR_FIXED_INDEX = VECTOR_SUBARRAY_INDEX + 1;
 
 export abstract class Ns
@@ -549,12 +551,19 @@ export function inobject(base: any, name: string): boolean
 /**
  * Checks whether an object owns a given property name.
  * 
- * This method looks for Array element indices and fixed variables,
+ * This method looks for Array element indices and own variables,
  * either for a base class or for a base instance.
  */
 export function hasownproperty(base: any, name: string): boolean
 {
-    checks_here;
+    if (base instanceof Array)
+    {
+        fix-me;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 /**
@@ -568,7 +577,7 @@ export function istype(value: any, type: any): boolean
 
     if (value instanceof Array)
     {
-        const instanceClasses = (value[0] as Class).recursivedescclasslist();
+        const instanceClasses = (value[CONSTRUCTOR_INDEX] as Class).recursivedescclasslist();
 
         if (type instanceof Class)
         {
@@ -707,8 +716,11 @@ export const stringclass = defineclass(name($publicns, "String"),
 
 export const arrayclass = defineclass(name($publicns, "Array"),
     {
+        dynamic: true,
+
         ctor(this: any, length: number = 0)
         {
+            this[ARRAY_DYNAMIC_PROPERTIES_INDEX] = new Map<any, any>();
             this[ARRAY_SUBARRAY_INDEX] = new Array(Math.max(0, length >>> 0));
         },
     },
