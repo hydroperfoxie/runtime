@@ -1238,12 +1238,12 @@ export function tostring(arg: any): string
 /**
  * The `AS3` namespace.
  */
-export const as3ns = packagens("http://adobe.com/AS3/2006/builtin");
+export const as3ns = new Userns("http://adobe.com/AS3/2006/builtin");
 
 /**
  * The `flash_proxy` namespace.
  */
-export const flashproxyns = packagens("http://www.adobe.com/2006/actionscript/flash/proxy");
+export const flashproxyns = new Userns("http://www.adobe.com/2006/actionscript/flash/proxy");
 
 // ----- Globals -----
 
