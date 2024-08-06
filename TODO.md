@@ -33,6 +33,7 @@ Define the following ActionScript 3 classes and properties:
 - [ ] `Infinity`
 - [ ] `Object`
 - [ ] `Class`
+- [ ] `Namespace`
 - [ ] `Number`
 - [ ] `uint`
 - [ ] `int`

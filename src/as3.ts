@@ -11,6 +11,8 @@ const VECTOR_FIXED_INDEX = VECTOR_SUBARRAY_INDEX + 1;
 
 const DICTIONARY_PROPERTIES_INDEX = 1;
 
+const CLASS_CLASS_INDEX = 1;
+
 export abstract class Ns
 {
     abstract toString(): string;
@@ -756,6 +758,49 @@ export function hasownproperty(base: any, name: any): boolean
 }
 
 /**
+ * Retrieves the value of a property taking
+ * an optional qualifier either as a namespace or an Array of namespaces
+ * and a local name.
+ * 
+ * @throws {ReferenceError} If the property is not defined or it is a reference of undefined or null.
+ */
+export function getproperty(base: any, qual: any, name: any): any
+{
+    // instance
+    if (base instanceof Array)
+    {
+        fix-me;
+    }
+    // class static
+    if (base instanceof Class)
+    {
+        fix-me;
+    }
+    // Number
+    if (typeof base == "number")
+    {
+        fix-me;
+    }
+    // Boolean
+    if (typeof base == "boolean")
+    {
+        fix-me;
+    }
+    // String
+    if (typeof base == "string")
+    {
+        fix-me;
+    }
+    // null
+    if (base === null)
+    {
+        throw new ReferenceError("Cannot read property of null.");
+    }
+    // undefined
+    throw new ReferenceError("Cannot read property of undefined.");
+}
+
+/**
  * Checks for `v is T`.
  */
 export function istype(value: any, type: any): boolean
@@ -846,6 +891,25 @@ let $publicns = packagens("");
 export const objectclass = defineclass(name($publicns, "Object"),
     {
         dynamic: true,
+    },
+    [
+    ]
+);
+
+export const namespaceclass = defineclass(name($publicns, "Namespace"),
+    {
+        final: true,
+    },
+    [
+    ]
+);
+
+export const classclass = defineclass(name($publicns, "Class"),
+    {
+        ctor(this: any, classobj: Class)
+        {
+            this[CLASS_CLASS_INDEX] = classobj;
+        },
     },
     [
     ]
