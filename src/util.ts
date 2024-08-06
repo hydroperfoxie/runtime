@@ -352,3 +352,9 @@ export class FlexVector
         return this.m_array.toLocaleString();
     }
 }
+
+export function isXMLName(argument: string): boolean
+{
+    argument = String(argument);
+    return /[a-z_][a-z_0-9.\-]*/i.test(argument);
+}

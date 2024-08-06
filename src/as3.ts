@@ -1,4 +1,4 @@
-import { assert, FlexVector } from "./util";
+import { assert, FlexVector, isXMLName } from "./util";
 
 const CONSTRUCTOR_INDEX = 0;
 
@@ -973,6 +973,28 @@ export function coerce(value: any, type: any): any
 }
 
 /**
+ * Constructs an ActionScript class.
+ */
+export function construct(classobj: Class, ...args: any[]): any
+{
+    const instance: any = [classobj];
+    if (classobj.dynamic)
+    {
+        instance[DYNAMIC_PROPERTIES_INDEX] = new Map<any, any>();
+    }
+    classobj.ctor.apply(instance, args);
+    return instance;
+}
+
+/**
+ * Converts an argument to a string.
+ */
+export function tostring(arg: any): string
+{
+    fix-me;
+}
+
+/**
  * The `AS3` namespace.
  */
 export const as3ns = packagens("http://adobe.com/AS3/2006/builtin");
@@ -994,10 +1016,14 @@ export const objectclass = defineclass(name($publicns, "Object"),
     ]
 );
 
-// Namespace(prefix:String, uri:String)
+// NAMESPACE_PREFIX_INDEX = prefix:String
+// NAMESPACE_URI_INDEX = uri:String
 export const namespaceclass = defineclass(name($publicns, "Namespace"),
     {
         final: true,
+
+        // Namespace(uri:*)
+        // Namespace(prefix:*, uri:*)
         ctor(this: any, arg1: any, arg2: any = undefined)
         {
             this[NAMESPACE_PREFIX_INDEX] =
@@ -1015,24 +1041,30 @@ export const namespaceclass = defineclass(name($publicns, "Namespace"),
                 }
                 else
                 {
-                    this[NAMESPACE_URI_INDEX] = String(arg1);
+                    this[NAMESPACE_URI_INDEX] = tostring(arg1);
                 }
             }
             else
             {
                 // arg1 = prefixValue
-                if (typeof arg1 === "undefined")
+                if (typeof arg1 === "undefined" || !isXMLName(arg1))
                 {
                     this[NAMESPACE_PREFIX_INDEX] = "undefined";
                 }
                 else
                 {
-                    this[NAMESPACE_PREFIX_INDEX] = fix-me;
-                    fix-me;
+                    this[NAMESPACE_PREFIX_INDEX] = tostring(arg1);
                 }
 
                 // arg2 = uriValue
-                this[NAMESPACE_URI_INDEX] = fix-me;
+                if (istype(arg2, qnameclass))
+                {
+                    this[NAMESPACE_URI_INDEX] = arg2[QNAME_URI_INDEX];
+                }
+                else
+                {
+                    this[NAMESPACE_URI_INDEX] = tostring(arg2);
+                }
             }
         },
     },
@@ -1040,16 +1072,60 @@ export const namespaceclass = defineclass(name($publicns, "Namespace"),
     ]
 );
 
-// QName(uri:String, localName:String)
+// QNAME_URI_INDEX = uri:String?
+// QNAME_LOCALNAME_INDEX = localName:String
 export const qnameclass = defineclass(name($publicns, "QName"),
     {
         final: true,
+
+        // QName(qname:*)
+        // QName(uri:*, localName:*)
         ctor(this: any, arg1: any, arg2: any = undefined)
         {
-            this[QNAME_URI_INDEX] =
+            this[QNAME_URI_INDEX] = null;
             this[QNAME_LOCALNAME_INDEX] = "";
 
-            fix-me;
+            // QName(qname:*)
+            if (typeof arg2 === "undefined" || arg2 === null)
+            {
+                if (typeof arg1 === "undefined")
+                {
+                    this[QNAME_LOCALNAME_INDEX] = "";
+                }
+                else if (istype(arg1, qnameclass))
+                {
+                    this[QNAME_URI_INDEX] = arg1[QNAME_URI_INDEX];
+                    this[QNAME_LOCALNAME_INDEX] = arg1[QNAME_LOCALNAME_INDEX];
+                }
+                else
+                {
+                    this[QNAME_LOCALNAME_INDEX] = tostring(arg1);
+                }
+            }
+            // QName(uri:*, localName:*)
+            else
+            {
+                if (typeof arg1 !== "undefined" && arg1 !== null)
+                {
+                    if (istype(arg1, namespaceclass))
+                    {
+                        this[QNAME_URI_INDEX] = arg1[NAMESPACE_URI_INDEX];
+                    }
+                    else
+                    {
+                        this[QNAME_URI_INDEX] = tostring(arg1);
+                    }
+                }
+
+                if (istype(arg2, qnameclass))
+                {
+                    this[QNAME_LOCALNAME_INDEX] = arg2[QNAME_LOCALNAME_INDEX];
+                }
+                else
+                {
+                    this[QNAME_LOCALNAME_INDEX] = tostring(arg2);
+                }
+            }
         },
     },
     [

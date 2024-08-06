@@ -14,10 +14,27 @@ Property operations:
 - [x] hasownproperty
 - [x] inobject
 - [ ] getproperty
-  - Bound methods
-  - Dictionary of weak keys does not accept any key.
-  - Class static "prototype" returns classobj.ecmaprototype
-  - Instance ecmaprototype
+  - Instance
+    - Instance prototype
+      - Bound methods
+    - Instance ecmaprototype
+    - Dynamic properties
+    - Collections
+      - Array
+      - Vector
+      - Vector$double|float|int|uint
+      - Dictionary
+        - Dictionary of weak keys does not accept any key.
+  - Class static
+    - Class static "prototype" returns classobj.ecmaprototype
+    - Static properties
+    - Inherit static properties
+  - Number value
+   - Inherit from instance definitions of Number class (including bound methods)
+  - Boolean value
+    - Inherit from instance definitions of Boolean class (including bound methods)
+  - String value
+    - Inherit from instance definitions of String class (including bound methods)
 - [ ] setproperty
   - Dictionary of weak keys does not accept any key.
   - Setting class static "prototype" results into error.
