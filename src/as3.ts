@@ -1041,22 +1041,16 @@ export function getproperty(base: any, qual: any, name: any): any
     // Number
     if (typeof base == "number")
     {
-        // intern base weakly
-        fix-me;
         return getproperty([numberclass, base], qual, name);
     }
     // Boolean
     if (typeof base == "boolean")
     {
-        // intern base weakly
-        fix-me;
         return getproperty([booleanclass, base], qual, name);
     }
     // String
     if (typeof base == "string")
     {
-        // intern base weakly
-        fix-me;
         return getproperty([stringclass, base], qual, name);
     }
     // null

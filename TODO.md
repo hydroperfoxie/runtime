@@ -11,13 +11,6 @@ Constructor operations:
 
 Property operations:
 
-- [ ] getproperty
-  - Number value
-   - Inherit from instance definitions of Number class (including bound methods)
-  - Boolean value
-    - Inherit from instance definitions of Boolean class (including bound methods)
-  - String value
-    - Inherit from instance definitions of String class (including bound methods)
 - [ ] callproperty
   - Apply any function with `this=base`
   - Different from getproperty, does not create bound methods inefficiently.
