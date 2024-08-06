@@ -1,6 +1,13 @@
 # To do list
 
-- nsalias()
+- defineinterface()
+- defineglobalnsalias()
+- defineglobalvar()
+- defineglobalvirtualvar()
+- defineglobalmethod()
+
+Elements:
+
 - virtualvar()
 - interface()
 - method()

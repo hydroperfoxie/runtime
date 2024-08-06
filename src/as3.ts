@@ -363,6 +363,9 @@ export function defineclass(name: Name, options: ClassOptions, items: [Name, any
     {
         const item: PossiblyStatic = item1 as PossiblyStatic;
         assert(item instanceof PossiblyStatic);
+
+        item.name = itemname.name;
+
         if (item.static)
         {
             class1.staticnames.setnsname(itemname.ns, itemname.name, item);
@@ -440,6 +443,10 @@ export class Metadata
 
 export class PossiblyStatic
 {
+    /**
+     * Fully package qualified name.
+     */
+    name: string = "";
     static: boolean = false;
 }
 
@@ -447,19 +454,29 @@ export class Nsalias extends PossiblyStatic
 {
     ns: Ns;
 
-    constructor(ns: Ns)
+    constructor(name: string, ns: Ns)
     {
         super();
+        this.name = name;
         this.ns = ns;
     }
 }
 
+export type NsaliasOptions =
+{
+    ns: Ns,
+    static?: boolean,
+};
+
+export function nsalias(options: NsaliasOptions): Nsalias
+{
+    const r = new Nsalias("", options.ns);
+    r.static = options.static ?? false;
+    return r;
+}
+
 export class Variable extends PossiblyStatic
 {
-    /**
-     * Fully package qualified name.
-     */
-    name: string;
     readonly: boolean;
     metadata: Metadata[];
      type: any;
@@ -491,10 +508,6 @@ export function variable(options: VariableOptions): Variable
 
 export class VirtualVariable extends PossiblyStatic
 {
-    /**
-     * Fully package qualified name.
-     */
-    name: string;
     getter: Method | null;
     setter: Method | null;
     metadata: Metadata[];
@@ -513,10 +526,6 @@ export class VirtualVariable extends PossiblyStatic
 
 export class Method extends PossiblyStatic
 {
-    /**
-     * Fully package qualified name.
-     */
-    name: string;
     metadata: Metadata[];
 
     /**
