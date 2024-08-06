@@ -46,6 +46,8 @@ Define the following ActionScript 3 classes and properties:
 - [ ] `Function`
 - [ ] `Namespace`
 - [ ] `QName`
+- [ ] `XML`
+- [ ] `XMLList`
 - [ ] `Number`
 - [ ] `uint`
 - [ ] `int`

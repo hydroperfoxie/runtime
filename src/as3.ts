@@ -1041,17 +1041,23 @@ export function getproperty(base: any, qual: any, name: any): any
     // Number
     if (typeof base == "number")
     {
+        // intern base weakly
         fix-me;
+        return getproperty([numberclass, base], qual, name);
     }
     // Boolean
     if (typeof base == "boolean")
     {
+        // intern base weakly
         fix-me;
+        return getproperty([booleanclass, base], qual, name);
     }
     // String
     if (typeof base == "string")
     {
+        // intern base weakly
         fix-me;
+        return getproperty([stringclass, base], qual, name);
     }
     // null
     if (base === null)
@@ -1185,6 +1191,20 @@ export function coerce(value: any, type: any): any
  */
 export function construct(classobj: Class, ...args: any[]): any
 {
+    switch (classobj)
+    {
+        case numberclass:
+        case floatclass:
+            return args.length == 0 ? NaN : Number(args[0]);
+        case intclass:
+            return args.length == 0 ? 0 : args[0] >>> 0;
+        case uintclass:
+            return args.length == 0 ? 0 : args[0] >> 0;
+        case booleanclass:
+            return args.length == 0 ? false : !!args[0];
+        case stringclass:
+            return args.length == 0 ? "" : String(args[0]);
+    }
     const instance: any = [classobj];
     if (classobj.dynamic)
     {
