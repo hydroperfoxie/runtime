@@ -426,6 +426,41 @@ export class Interface
     }
 }
 
+export type InterfaceOptions =
+{
+    extendslist?: Interface[],
+    metadata?: Metadata[],
+};
+
+export function defineinterface(name: Name, options: InterfaceOptions, items: [Name, any][]): Interface
+{
+    let finalname = "";
+    if (name.ns instanceof Systemns && name.ns.parent instanceof Package)
+    {
+        finalname = name.ns.parent.name + "." + name.name;
+    }
+
+    const itrfc = new Interface(finalname, options.metadata ?? []);
+
+    // Extends interfaces
+    itrfc.baseinterfaces = options.extendslist ?? [];
+
+    // Define items
+    for (const [itemname, item1] of items)
+    {
+        const item: PossiblyStatic = item1 as PossiblyStatic;
+        assert(item instanceof PossiblyStatic);
+        assert(!item.static && (item instanceof VirtualVariable || item instanceof Method));
+        item.name = itemname.name;
+        itrfc.prototypenames.setnsname(itemname.ns, itemname.name, item);
+    }
+
+    // Finish
+    globalnames.setnsname(name.ns, name.name, itrfc);
+
+    return itrfc;
+}
+
 /**
  * Meta-data attached to traits such as classes, methods and properties.
  */
@@ -524,6 +559,22 @@ export class VirtualVariable extends PossiblyStatic
     }
 }
 
+export type VirtualVariableOptions =
+{
+    getter: Method | null,
+    setter: Method | null,
+    metadata?: Metadata[],
+    type: any,
+    static?: boolean,
+};
+
+export function virtualvar(options: VirtualVariableOptions): VirtualVariable
+{
+    const vvar = new VirtualVariable("", options.getter, options.setter, options.metadata ?? [], options.type);
+    vvar.static = options.static ?? false;
+    return vvar;
+}
+
 export class Method extends PossiblyStatic
 {
     metadata: Metadata[];
@@ -545,6 +596,21 @@ export class Method extends PossiblyStatic
         this.disp = disp;
         this.nodisp = nodisp;
     }
+}
+
+export type MethodOptions =
+{
+    disp: Function,
+    nodisp: Function,
+    metadata?: Metadata[],
+    static?: boolean,
+};
+
+export function method(options: MethodOptions): Method
+{
+    const m = new Method("", options.metadata ?? [], options.disp, options.nodisp);
+    m.static = options.static ?? false;
+    return m;
 }
 
 const globalnames = new Names();

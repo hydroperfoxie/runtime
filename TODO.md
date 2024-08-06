@@ -1,22 +1,16 @@
 # To do list
 
-- defineinterface()
 - defineglobalnsalias()
 - defineglobalvar()
 - defineglobalvirtualvar()
 - defineglobalmethod()
-
-Elements:
-
-- virtualvar()
-- interface()
-- method()
 
 Property operations:
 
 - [x] hasownproperty
 - [x] inobject
 - [ ] getproperty
+  - Bound methods
   - Dictionary of weak keys does not accept any key.
   - Class static "prototype" returns classobj.ecmaprototype
   - Instance ecmaprototype
