@@ -15,14 +15,7 @@ Property operations:
 - [x] inobject
 - [ ] getproperty
   - Instance
-    - Instance prototype
-      - Bound methods
-    - Instance ecmaprototype
-    - Dynamic properties
     - Collections
-      - Array
-      - Vector
-      - Vector$double|float|int|uint
       - Dictionary
         - Dictionary of weak keys does not accept any key.
   - Class static
@@ -35,6 +28,10 @@ Property operations:
     - Inherit from instance definitions of Boolean class (including bound methods)
   - String value
     - Inherit from instance definitions of String class (including bound methods)
+- [ ] callproperty
+  - Apply any function with `this=base`
+  - Different from getproperty, does not create bound methods inefficiently.
+  - Consider calling ecmaprototype methods
 - [ ] setproperty
   - Dictionary of weak keys does not accept any key.
   - Setting class static "prototype" results into error.

@@ -201,23 +201,10 @@ export class Names
         }
         return result;
     }
-    
+
     hasnsname(ns: Ns, name: string): boolean
     {
         return this.m_dict.get(ns)?.has(name) ?? false;
-    }
-
-    hasnssetname(nsset: Ns[], name: string): boolean
-    {
-        for (const ns of nsset)
-        {
-            const result = ns.ispublicns() ? this.haspublicname(name) : this.hasnsname(ns, name);
-            if (result)
-            {
-                return result;
-            }
-        }
-        return false;
     }
 
     haspublicname(name: string): boolean
@@ -230,6 +217,24 @@ export class Names
             }
         }
         return false;
+    }
+
+    /**
+     * Retrieves name by a generic qualifier (namespace, namespace array, or nothing)
+     * and a local name.
+     */
+    getname(qual: any, name: string): any
+    {
+        if (qual instanceof Array)
+        {
+            return this.getnssetname(qual, name);
+        }
+        if (qual instanceof Ns)
+        {
+            return this.getnsname(qual, name);
+        }
+        assert(typeof qual === "undefined" || qual === null);
+        return this.getpublicname(name);
     }
     
     getnsname(ns: Ns, name: string): any
@@ -304,7 +309,12 @@ export class Class
     ctor: Function;
 
     readonly staticnames: Names = new Names();
-    readonly ecmaprototype: any = {};
+    /**
+     * The read-only ECMAScript 3 `prototype` record
+     * containing ActionScript values.
+     */
+    readonly ecmaprototype: Record<string, any> = {};
+
     readonly prototypenames: Names = new Names();
 
     readonly staticvarvals: Map<Variable, any> = new Map();
@@ -628,7 +638,7 @@ const globalvarvals = new Map<Variable, any>();
 /**
  * Maps (instance) to (method) to (bound method Function instance).
  */
-const boundmethods = new Map<Array<any>, Map<Method, any>>();
+const boundmethods = new WeakMap<any, Map<Method, any>>();
 
 /**
  * Checks whether an object has or inherits a given property name.
@@ -780,43 +790,7 @@ export function hasownproperty(base: any, name: any): boolean
             let i = name >> 0;
             return i >= 0 && i < base[ARRAY_SUBARRAY_INDEX].length;
         }
-        if (istype(base, vectorclass))
-        {
-            if (Number(name) != name >> 0)
-            {
-                return false;
-            }
-            let i = name >> 0;
-            return i >= 0 && i < base[VECTOR_SUBARRAY_INDEX].length;
-        }
-        if (istype(base, vectordoubleclass))
-        {
-            if (Number(name) != name >> 0)
-            {
-                return false;
-            }
-            let i = name >> 0;
-            return i >= 0 && i < base[VECTOR_SUBARRAY_INDEX].length;
-        }
-        if (istype(base, vectorfloatclass))
-        {
-            if (Number(name) != name >> 0)
-            {
-                return false;
-            }
-            let i = name >> 0;
-            return i >= 0 && i < base[VECTOR_SUBARRAY_INDEX].length;
-        }
-        if (istype(base, vectorintclass))
-        {
-            if (Number(name) != name >> 0)
-            {
-                return false;
-            }
-            let i = name >> 0;
-            return i >= 0 && i < base[VECTOR_SUBARRAY_INDEX].length;
-        }
-        if (istype(base, vectoruintclass))
+        if (istype(base, vectorclass) || istype(base, vectordoubleclass) || istype(base, vectorfloatclass) || istype(base, vectorintclass) || istype(base, vectoruintclass))
         {
             if (Number(name) != name >> 0)
             {
@@ -844,9 +818,7 @@ export function hasownproperty(base: any, name: any): boolean
 }
 
 /**
- * Retrieves the value of a property taking
- * an optional qualifier either as a namespace or an Array of namespaces
- * and a local name.
+ * Retrieves the value of a property.
  * 
  * @throws {ReferenceError} If the property is not defined or it is a reference of undefined or null.
  */
@@ -855,7 +827,110 @@ export function getproperty(base: any, qual: any, name: any): any
     // instance
     if (base instanceof Array)
     {
-        fix-me;
+        const ctor = base[CONSTRUCTOR_INDEX] as Class;
+        const slotfixturestart = ctor.dynamic ? 2 : 1;
+
+        // instance prototype
+        let c1 = ctor;
+        while (c1 !== null)
+        {
+            let itrait = c1.prototypenames.getname(qual, String(name));
+            // variable
+            if (itrait instanceof Variable)
+            {
+                const i = ctor.prototypevarslots.indexOf(itrait);
+                return base[slotfixturestart + i];
+            }
+            // property accessor
+            if (itrait instanceof VirtualVariable)
+            {
+                const getter = itrait.getter;
+                if (getter === null)
+                {
+                    throw new ReferenceError("Cannot read write-only property.");
+                }
+                return getter!.disp.apply(base, []);
+            }
+            // bound method
+            if (itrait instanceof Method)
+            {
+                let bm1 = boundmethods.get(base);
+                if (!bm1)
+                {
+                    bm1 = new Map<Method, any>();
+                    boundmethods.set(base, bm1);
+                }
+                let bm: any = boundmethods.get(itrait);
+                if (bm === null)
+                {
+                    bm = construct(functionclass);
+                    bm[FUNCTION_FUNCTION_INDEX] = itrait.disp.bind(base);
+                    boundmethods.set(itrait, bm);
+                }
+                return bm;
+            }
+            if (itrait instanceof Nsalias)
+            {
+                let uri = itrait.ns instanceof Systemns ? "" : itrait.ns instanceof Userns ? itrait.ns.uri : (itrait.ns as Explicitns).uri;
+                if (itrait.ns instanceof Systemns)
+                {
+                    let p = itrait.ns.parent instanceof Package ? itrait.ns.parent.name : itrait.ns.parent instanceof Class ? itrait.ns.parent.name : "";
+                    uri = p + "$" + (Math.random() * 16).toString(16).replace(".", "").slice(0, 5);
+                }
+                return construct(namespaceclass, [uri]);
+            }
+            
+            // instance ecmaprototype
+            if ((!qual || (qual instanceof Ns && qual.ispublicns())) && Object.prototype.hasOwnProperty.apply(c1.ecmaprototype, [String(name)]))
+            {
+                return c1.ecmaprototype[String(name)];
+            }
+
+            c1 = c1.baseclass;
+        }
+
+        if (!qual || (qual instanceof Ns && qual.ispublicns()))
+        {
+            if (ctor.dynamic)
+            {
+                if (base[DYNAMIC_PROPERTIES_INDEX].has(String(name)))
+                {
+                    return base[DYNAMIC_PROPERTIES_INDEX].get(String(name));
+                }
+            }
+
+            // Read collection properties (Array, Vector[$double|$float|$int|$uint], Dictionary)
+
+            if (istype(base, arrayclass) && Number(name) == name >> 0)
+            {
+                return base[ARRAY_SUBARRAY_INDEX][name >> 0];
+            }
+            if (istype(base, vectorclass) && Number(name) == name >> 0)
+            {
+                let i = name >> 0;
+                if (i < 0 || i >= base[VECTOR_SUBARRAY_INDEX].length)
+                {
+                    throw new ReferenceError("Index " + i + " out of bounds (length=" + base[VECTOR_SUBARRAY_INDEX].length + ").");
+                }
+                return base[VECTOR_SUBARRAY_INDEX][i];
+            }
+            if ((istype(base, vectordoubleclass) || istype(base, vectorfloatclass) || istype(base, vectorintclass) || istype(base, vectoruintclass)) && Number(name) == name >> 0)
+            {
+                let i = name >> 0, l = base[VECTOR_SUBARRAY_INDEX].length;
+                if (i < 0 || i >= l)
+                {
+                    throw new ReferenceError("Index " + i + " out of bounds (length=" + l + ").");
+                }
+                return base[VECTOR_SUBARRAY_INDEX].get(i);
+            }
+            if (istype(base, dictionaryclass))
+            {
+                fix-me;
+                return base[DICTIONARY_PROPERTIES_INDEX].has(name);
+            }
+        }
+
+        throw new ReferenceError("Access of undefined property +" + name + ".");
     }
     // class static
     if (base instanceof Class)
