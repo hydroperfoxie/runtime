@@ -1,25 +1,10 @@
 import { assert, FlexVector, isXMLName } from "./util";
 
+// Object.prototype.constructor
 const CONSTRUCTOR_INDEX = 0;
 
+// dynamic class { ...[k]=v }
 const DYNAMIC_PROPERTIES_INDEX = 1;
-
-const ARRAY_SUBARRAY_INDEX = DYNAMIC_PROPERTIES_INDEX + 1;
-
-const VECTOR_SUBARRAY_INDEX = 1;
-const VECTOR_FIXED_INDEX = VECTOR_SUBARRAY_INDEX + 1;
-
-const DICTIONARY_PROPERTIES_INDEX = 1;
-
-const CLASS_CLASS_INDEX = 1;
-
-const NAMESPACE_PREFIX_INDEX = 1;
-const NAMESPACE_URI_INDEX = 2;
-
-const QNAME_URI_INDEX = 1;
-const QNAME_LOCALNAME_INDEX = 2;
-
-const FUNCTION_FUNCTION_INDEX = 1;
 
 export abstract class Ns
 {
@@ -202,21 +187,58 @@ export class Names
         return result;
     }
 
+    hasname(qual: any, name: string): boolean
+    {
+        if (!qual)
+        {
+            return this.haspublicname(name);
+        }
+        return qual instanceof Ns ? this.hasnsname(qual, name) : this.hasnssetname(qual, name);
+    }
+
     hasnsname(ns: Ns, name: string): boolean
     {
         return this.m_dict.get(ns)?.has(name) ?? false;
     }
 
+    hasnssetname(nsset: Ns[], name: string): boolean
+    {
+        let found = false;
+        for (const ns of nsset)
+        {
+            const result = ns.ispublicns() ? this.getpublicname(name) : this.getnsname(ns, name);
+            if (result !== null)
+            {
+                if (found)
+                {
+                    throw constructerror(referenceerrorclass, "Ambiguous reference to " + name + ".");
+                }
+                found = true;
+            }
+        }
+        return found;
+    }
+
     haspublicname(name: string): boolean
     {
+        let found = false;
         for (const [ns, names] of this.m_dict)
         {
             if (ns instanceof Systemns && ns.kind == Systemns.PUBLIC)
             {
-                return names.has(name) ?? false;
+                const result = names.has(name);
+
+                if (result)
+                {
+                    if (found)
+                    {
+                        throw constructerror(referenceerrorclass, "Ambiguous reference to " + name + ".");
+                    }
+                    found = true;
+                }
             }
         }
-        return false;
+        return found;
     }
 
     /**
@@ -310,10 +332,10 @@ export class Class
 
     readonly staticnames: Names = new Names();
     /**
-     * The read-only ECMAScript 3 `prototype` record
+     * The read-only ECMAScript 3 `prototype` Object
      * containing ActionScript values.
      */
-    readonly ecmaprototype: Record<string, any> = {};
+    ecmaprototype: any = null;
 
     readonly prototypenames: Names = new Names();
 
@@ -369,8 +391,15 @@ export function defineclass(name: Name, options: ClassOptions, items: [Name, any
 
     const class1 = new Class(finalname, options.final ?? false, options.dynamic ?? false, options.metadata ?? [], options.ctor ?? function() {});
 
+    const isobjectclass = name.ns === packagens("") && name.name == "Object";
+
     // Extend class
-    class1.baseclass = options.extendslist ?? null;
+    if (!isobjectclass)
+    {
+        assert(!!objectclass);
+        class1.baseclass = options.extendslist ?? objectclass;
+        class1.ecmaprototype = construct(objectclass);
+    }
 
     // Implement interfaces
     class1.interfaces = options.implementslist ?? [];
@@ -408,6 +437,11 @@ export function defineclass(name: Name, options: ClassOptions, items: [Name, any
 
     // Finish
     globalnames.setnsname(name.ns, name.name, class1);
+
+    if (isobjectclass)
+    {
+        class1.ecmaprototype = construct(objectclass);
+    }
 
     return class1;
 }
@@ -666,7 +700,7 @@ export function inobject(base: any, name: any): boolean
                 return true;
             }
             // ECMAScript 3 prototype
-            if (Object.prototype.hasOwnProperty.apply(c1.ecmaprototype, [String(name)]))
+            if (hasonlydynamicproperty(c1.ecmaprototype, String(name)))
             {
                 return true;
             }
@@ -729,7 +763,18 @@ export function inobject(base: any, name: any): boolean
         }
         if (istype(base, dictionaryclass))
         {
-            return base[DICTIONARY_PROPERTIES_INDEX].has(name);
+            const mm = base[DICTIONARY_PROPERTIES_INDEX];
+            if (mm instanceof WeakMap && !(name instanceof Array))
+            {
+                throw constructerror(referenceerrorclass, "Weak key must be a managed Object.");
+            }
+            return mm.has(name);
+        }
+
+        // Test the "Class" object
+        if (istype(base, classclass) && inobject(base[CLASS_CLASS_INDEX], name))
+        {
+            return true;
         }
     }
     // Class static
@@ -742,7 +787,7 @@ export function inobject(base: any, name: any): boolean
         let c1 = base;
         while (c1 !== null)
         {
-            if (c1.prototypenames.haspublicname(String(name)))
+            if (c1.staticnames.haspublicname(String(name)))
             {
                 return true;
             }
@@ -774,7 +819,7 @@ export function hasownproperty(base: any, name: any): boolean
         while (c1 !== null)
         {
             let varb = c1.prototypenames.getpublicname(String(name));
-            if (varb instanceof Variable)
+            if (varb instanceof Variable || varb instanceof VirtualVariable)
             {
                 return true;
             }
@@ -801,7 +846,18 @@ export function hasownproperty(base: any, name: any): boolean
         }
         if (istype(base, dictionaryclass))
         {
-            return base[DICTIONARY_PROPERTIES_INDEX].has(name);
+            const mm = base[DICTIONARY_PROPERTIES_INDEX];
+            if (mm instanceof WeakMap && !(name instanceof Array))
+            {
+                throw constructerror(referenceerrorclass, "Weak key must be a managed Object.");
+            }
+            return mm.has(name);
+        }
+
+        // Test the "Class" object
+        if (istype(base, classclass) && hasownproperty(base[CLASS_CLASS_INDEX], name))
+        {
+            return true;
         }
     }
     // Class static
@@ -819,8 +875,6 @@ export function hasownproperty(base: any, name: any): boolean
 
 /**
  * Retrieves the value of a property.
- * 
- * @throws {ReferenceError} If the property is not defined or it is a reference of undefined or null.
  */
 export function getproperty(base: any, qual: any, name: any): any
 {
@@ -835,55 +889,54 @@ export function getproperty(base: any, qual: any, name: any): any
         while (c1 !== null)
         {
             let itrait = c1.prototypenames.getname(qual, String(name));
-            // variable
-            if (itrait instanceof Variable)
+            if (itrait)
             {
-                const i = ctor.prototypevarslots.indexOf(itrait);
-                return base[slotfixturestart + i];
-            }
-            // property accessor
-            if (itrait instanceof VirtualVariable)
-            {
-                const getter = itrait.getter;
-                if (getter === null)
+                // variable
+                if (itrait instanceof Variable)
                 {
-                    throw new ReferenceError("Cannot read write-only property.");
+                    const i = ctor.prototypevarslots.indexOf(itrait);
+                    return base[slotfixturestart + i];
                 }
-                return getter!.disp.apply(base, []);
-            }
-            // bound method
-            if (itrait instanceof Method)
-            {
-                let bm1 = boundmethods.get(base);
-                if (!bm1)
+                // property accessor
+                if (itrait instanceof VirtualVariable)
                 {
-                    bm1 = new Map<Method, any>();
-                    boundmethods.set(base, bm1);
+                    const getter = itrait.getter;
+                    if (getter === null)
+                    {
+                        throw constructerror(referenceerrorclass, "Cannot read write-only property.");
+                    }
+                    return getter!.disp.apply(base, []);
                 }
-                let bm: any = boundmethods.get(itrait);
-                if (bm === null)
+                // bound method
+                if (itrait instanceof Method)
                 {
-                    bm = construct(functionclass);
-                    bm[FUNCTION_FUNCTION_INDEX] = itrait.disp.bind(base);
-                    boundmethods.set(itrait, bm);
+                    let bm1 = boundmethods.get(base);
+                    if (!bm1)
+                    {
+                        bm1 = new Map<Method, any>();
+                        boundmethods.set(base, bm1);
+                    }
+                    let bm: any = boundmethods.get(itrait);
+                    if (bm === null)
+                    {
+                        bm = construct(functionclass);
+                        bm[FUNCTION_FUNCTION_INDEX] = itrait.disp.bind(base);
+                        boundmethods.set(itrait, bm);
+                    }
+                    return bm;
                 }
-                return bm;
-            }
-            if (itrait instanceof Nsalias)
-            {
-                let uri = itrait.ns instanceof Systemns ? "" : itrait.ns instanceof Userns ? itrait.ns.uri : (itrait.ns as Explicitns).uri;
-                if (itrait.ns instanceof Systemns)
+                if (itrait instanceof Nsalias)
                 {
-                    let p = itrait.ns.parent instanceof Package ? itrait.ns.parent.name : itrait.ns.parent instanceof Class ? itrait.ns.parent.name : "";
-                    uri = p + "$" + (Math.random() * 16).toString(16).replace(".", "").slice(0, 5);
+                    return reflectnamespace(itrait.ns);
                 }
-                return construct(namespaceclass, [uri]);
+                
+                throw constructerror(referenceerrorclass, "Internal error");
             }
             
             // instance ecmaprototype
-            if ((!qual || (qual instanceof Ns && qual.ispublicns())) && Object.prototype.hasOwnProperty.apply(c1.ecmaprototype, [String(name)]))
+            if ((!qual || (qual instanceof Ns && qual.ispublicns())) && hasonlydynamicproperty(c1.ecmaprototype, String(name)))
             {
-                return c1.ecmaprototype[String(name)];
+                return getonlydynamicproperty(c1.ecmaprototype, String(name));
             }
 
             c1 = c1.baseclass;
@@ -910,7 +963,7 @@ export function getproperty(base: any, qual: any, name: any): any
                 let i = name >> 0;
                 if (i < 0 || i >= base[VECTOR_SUBARRAY_INDEX].length)
                 {
-                    throw new ReferenceError("Index " + i + " out of bounds (length=" + base[VECTOR_SUBARRAY_INDEX].length + ").");
+                    throw constructerror(referenceerrorclass, "Index " + i + " out of bounds (length=" + base[VECTOR_SUBARRAY_INDEX].length + ").");
                 }
                 return base[VECTOR_SUBARRAY_INDEX][i];
             }
@@ -919,23 +972,71 @@ export function getproperty(base: any, qual: any, name: any): any
                 let i = name >> 0, l = base[VECTOR_SUBARRAY_INDEX].length;
                 if (i < 0 || i >= l)
                 {
-                    throw new ReferenceError("Index " + i + " out of bounds (length=" + l + ").");
+                    throw constructerror(referenceerrorclass, "Index " + i + " out of bounds (length=" + l + ").");
                 }
                 return base[VECTOR_SUBARRAY_INDEX].get(i);
             }
             if (istype(base, dictionaryclass))
             {
-                fix-me;
-                return base[DICTIONARY_PROPERTIES_INDEX].has(name);
+                const mm = base[DICTIONARY_PROPERTIES_INDEX];
+                if (mm instanceof WeakMap && !(name instanceof Array))
+                {
+                    throw constructerror(referenceerrorclass, "Weak key must be a managed Object.");
+                }
+                return mm.get(name);
             }
         }
 
-        throw new ReferenceError("Access of undefined property +" + name + ".");
+        // Read the "Class" object's class properties
+        if (istype(base, classclass))
+        {
+            return getproperty(base[CLASS_CLASS_INDEX], qual, name);
+        }
+
+        throw constructerror(referenceerrorclass, "Access of undefined property +" + name + ".");
     }
     // class static
     if (base instanceof Class)
     {
-        fix-me;
+        if (String(name) == "prototype")
+        {
+            return base.ecmaprototype;
+        }
+        let c1 = base;
+        while (c1 !== null)
+        {
+            const trait = c1.staticnames.getname(qual, name);
+            if (trait)
+            {
+                // variable
+                if (trait instanceof Variable)
+                {
+                    return c1.staticvarvals.get(trait);
+                }
+                // property accessor
+                if (trait instanceof VirtualVariable)
+                {
+                    const getter = trait.getter;
+                    if (getter === null)
+                    {
+                        throw constructerror(referenceerrorclass, "Cannot read write-only property.");
+                    }
+                    return getter!.disp.apply(undefined, []);
+                }
+                // method
+                if (trait instanceof Method)
+                {
+                    return trait.disp.apply(undefined, []);
+                }
+                // namespace
+                if (trait instanceof Nsalias)
+                {
+                    return reflectnamespace(trait.ns);
+                }
+                throw constructerror(referenceerrorclass, "Internal error");
+            }
+            c1 = c1.baseclass;
+        }
     }
     // Number
     if (typeof base == "number")
@@ -955,10 +1056,42 @@ export function getproperty(base: any, qual: any, name: any): any
     // null
     if (base === null)
     {
-        throw new ReferenceError("Cannot read property of null.");
+        throw constructerror(referenceerrorclass, "Cannot read property of null.");
     }
     // undefined
-    throw new ReferenceError("Cannot read property of undefined.");
+    throw constructerror(referenceerrorclass, "Cannot read property of undefined.");
+}
+
+export function getonlydynamicproperty(base: any, name: any): any
+{
+    assert(base instanceof Array);
+    const ctor = base[CONSTRUCTOR_INDEX] as Class;
+    assert(ctor.dynamic);
+    return (base[DYNAMIC_PROPERTIES_INDEX] as Map<any, any>).get(name);
+}
+
+export function setonlydynamicproperty(base: any, name: any, value: any): any
+{
+    assert(base instanceof Array);
+    const ctor = base[CONSTRUCTOR_INDEX] as Class;
+    assert(ctor.dynamic);
+    (base[DYNAMIC_PROPERTIES_INDEX] as Map<any, any>).set(name, value);
+}
+
+export function deleteonlydynamicproperty(base: any, name: any): boolean
+{
+    assert(base instanceof Array);
+    const ctor = base[CONSTRUCTOR_INDEX] as Class;
+    assert(ctor.dynamic);
+    return (base[DYNAMIC_PROPERTIES_INDEX] as Map<any, any>).delete(name);
+}
+
+export function hasonlydynamicproperty(base: any, name: any): boolean
+{
+    assert(base instanceof Array);
+    const ctor = base[CONSTRUCTOR_INDEX] as Class;
+    assert(ctor.dynamic);
+    return (base[DYNAMIC_PROPERTIES_INDEX] as Map<any, any>).has(name);
 }
 
 /**
@@ -1066,7 +1199,26 @@ export function construct(classobj: Class, ...args: any[]): any
  */
 export function tostring(arg: any): string
 {
-    fix-me;
+    if (typeof arg == "string")
+    {
+        return arg;
+    }
+    if (typeof arg == "number" || typeof arg == "boolean" || typeof arg == "undefined" || arg === null)
+    {
+        return String(arg);
+    }
+    try
+    {
+        const m = getproperty(arg, null, "toString");
+        if (m instanceof Method)
+        {
+            return tostring(m.disp.apply(arg, []));
+        }
+    }
+    catch (e)
+    {
+    }
+    return "[object]";
 }
 
 /**
@@ -1091,8 +1243,8 @@ export const objectclass = defineclass(name($publicns, "Object"),
     ]
 );
 
-// NAMESPACE_PREFIX_INDEX = prefix:String
-// NAMESPACE_URI_INDEX = uri:String
+const NAMESPACE_PREFIX_INDEX = 1; // prefix:String
+const NAMESPACE_URI_INDEX = 2; // uri:String
 export const namespaceclass = defineclass(name($publicns, "Namespace"),
     {
         final: true,
@@ -1147,8 +1299,22 @@ export const namespaceclass = defineclass(name($publicns, "Namespace"),
     ]
 );
 
-// QNAME_URI_INDEX = uri:String?
-// QNAME_LOCALNAME_INDEX = localName:String
+/**
+ * Constructs a `Namespace` object from an ActionScript namespace.
+ */
+export function reflectnamespace(ns: Ns): any
+{
+    let uri = ns instanceof Systemns ? "" : ns instanceof Userns ? ns.uri : (ns as Explicitns).uri;
+    if (ns instanceof Systemns)
+    {
+        let p = ns.parent instanceof Package ? ns.parent.name : ns.parent instanceof Class ? ns.parent.name : "";
+        uri = p + "$" + (Math.random() * 16).toString(16).replace(".", "").slice(0, 5);
+    }
+    return construct(namespaceclass, [uri]);
+}
+
+const QNAME_URI_INDEX = 1; // uri:String?
+const QNAME_LOCALNAME_INDEX = 2; // localName:String
 export const qnameclass = defineclass(name($publicns, "QName"),
     {
         final: true,
@@ -1207,6 +1373,7 @@ export const qnameclass = defineclass(name($publicns, "QName"),
     ]
 );
 
+const CLASS_CLASS_INDEX = 1;
 export const classclass = defineclass(name($publicns, "Class"),
     {
         ctor(this: any)
@@ -1270,13 +1437,13 @@ export const stringclass = defineclass(name($publicns, "String"),
     ]
 );
 
+const ARRAY_SUBARRAY_INDEX = DYNAMIC_PROPERTIES_INDEX + 1;
 export const arrayclass = defineclass(name($publicns, "Array"),
     {
         dynamic: true,
 
         ctor(this: any, length: number = 0)
         {
-            this[DYNAMIC_PROPERTIES_INDEX] = new Map<any, any>();
             this[ARRAY_SUBARRAY_INDEX] = new Array(Math.max(0, length >>> 0));
         },
     },
@@ -1284,8 +1451,197 @@ export const arrayclass = defineclass(name($publicns, "Array"),
     ]
 );
 
+const ERROR_NAME_INDEX = 2; // name:String
+const ERROR_MESSAGE_INDEX = 3; // message:String
+const ERROR_ERRORID_INDEX = 4; // errorID:int
+const ERROR_STACKTRACE_ELEMENTS_INDEX = 5; // an array of StackTrace
+export const errorclass = defineclass(name($publicns, "Error"),
+    {
+        dynamic: true,
+
+        ctor(this: any, message: string = "", id: number = 0)
+        {
+            this[ERROR_NAME_INDEX] = (this[CONSTRUCTOR_INDEX] as Class).name;
+            this[ERROR_MESSAGE_INDEX] = tostring(message);
+            this[ERROR_ERRORID_INDEX] = id >> 0;
+            this[ERROR_STACKTRACE_ELEMENTS_INDEX] = [];
+        },
+    },
+    [
+    ]
+);
+
+/**
+ * Constructs an ActionScript `Error` object.
+ */
+export function constructerror(errorclass: Class, message: string = "", id: number = 0, stacktraceElements: StackTrace[] = []): any
+{
+    const obj = construct(errorclass);
+    assert(istype(obj, errorclass));
+    obj[ERROR_MESSAGE_INDEX] = tostring(message);
+    obj[ERROR_ERRORID_INDEX] = id >> 0;
+    obj[ERROR_STACKTRACE_ELEMENTS_INDEX] = stacktraceElements.slice(0);
+    return obj;
+}
+
+export const argumenterrorclass = defineclass(name($publicns, "ArgumentError"),
+    {
+        dynamic: true,
+        extendslist: errorclass,
+
+        ctor(this: any, message: string = "")
+        {
+            errorclass.ctor.apply(this, [message]);
+        },
+    },
+    [
+    ]
+);
+
+export const definitionerrorclass = defineclass(name($publicns, "DefinitionError"),
+    {
+        dynamic: true,
+        extendslist: errorclass,
+
+        ctor(this: any, message: string = "")
+        {
+            errorclass.ctor.apply(this, [message]);
+        },
+    },
+    [
+    ]
+);
+
+export const evalerrorclass = defineclass(name($publicns, "EvalError"),
+    {
+        dynamic: true,
+        extendslist: errorclass,
+
+        ctor(this: any, message: string = "")
+        {
+            errorclass.ctor.apply(this, [message]);
+        },
+    },
+    [
+    ]
+);
+
+export const rangeerrorclass = defineclass(name($publicns, "RangeError"),
+    {
+        dynamic: true,
+        extendslist: errorclass,
+
+        ctor(this: any, message: string = "")
+        {
+            errorclass.ctor.apply(this, [message]);
+        },
+    },
+    [
+    ]
+);
+
+export const referenceerrorclass = defineclass(name($publicns, "ReferenceError"),
+    {
+        dynamic: true,
+        extendslist: errorclass,
+
+        ctor(this: any, message: string = "")
+        {
+            errorclass.ctor.apply(this, [message]);
+        },
+    },
+    [
+    ]
+);
+
+export const securityerrorclass = defineclass(name($publicns, "SecurityError"),
+    {
+        dynamic: true,
+        extendslist: errorclass,
+
+        ctor(this: any, message: string = "")
+        {
+            errorclass.ctor.apply(this, [message]);
+        },
+    },
+    [
+    ]
+);
+
+export const syntaxerrorclass = defineclass(name($publicns, "SyntaxError"),
+    {
+        dynamic: true,
+        extendslist: errorclass,
+
+        ctor(this: any, message: string = "")
+        {
+            errorclass.ctor.apply(this, [message]);
+        },
+    },
+    [
+    ]
+);
+
+export const typeerrorclass = defineclass(name($publicns, "TypeError"),
+    {
+        dynamic: true,
+        extendslist: errorclass,
+
+        ctor(this: any, message: string = "")
+        {
+            errorclass.ctor.apply(this, [message]);
+        },
+    },
+    [
+    ]
+);
+
+export const urierrorclass = defineclass(name($publicns, "URIError"),
+    {
+        dynamic: true,
+        extendslist: errorclass,
+
+        ctor(this: any, message: string = "")
+        {
+            errorclass.ctor.apply(this, [message]);
+        },
+    },
+    [
+    ]
+);
+
+export const verifyerrorclass = defineclass(name($publicns, "VerifyError"),
+    {
+        dynamic: true,
+        extendslist: errorclass,
+
+        ctor(this: any, message: string = "")
+        {
+            errorclass.ctor.apply(this, [message]);
+        },
+    },
+    [
+    ]
+);
+
+/**
+ * A (method name, source location) group.
+ */
+export class StackTrace
+{
+    methodName: string;
+    sourceLocation: string;
+
+    constructor(methodName: string, sourceLocation: string)
+    {
+        this.methodName = methodName;
+        this.sourceLocation = sourceLocation;
+    }
+}
+
 function mdefaultfunction() {}
 
+const FUNCTION_FUNCTION_INDEX = 1;
 export const functionclass = defineclass(name($publicns, "Function"),
     {
         final: true,
@@ -1301,6 +1657,8 @@ export const functionclass = defineclass(name($publicns, "Function"),
 
 $publicns = packagens("__AS3__.vec");
 
+const VECTOR_SUBARRAY_INDEX = 1;
+const VECTOR_FIXED_INDEX = 2;
 export const vectorclass = defineclass(name($publicns, "Vector"),
     {
         ctor(this: any, length: number = 0, fixed: boolean = false)
@@ -1359,6 +1717,7 @@ export const vectoruintclass = defineclass(name($publicns, "Vector$uint"),
 
 $publicns = packagens("flash.utils");
 
+const DICTIONARY_PROPERTIES_INDEX = 1;
 export const dictionaryclass = defineclass(name($publicns, "Dictionary"),
     {
         ctor(this: any, weakKeys: boolean = false)

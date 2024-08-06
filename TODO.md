@@ -11,17 +11,7 @@ Constructor operations:
 
 Property operations:
 
-- [x] hasownproperty
-- [x] inobject
 - [ ] getproperty
-  - Instance
-    - Collections
-      - Dictionary
-        - Dictionary of weak keys does not accept any key.
-  - Class static
-    - Class static "prototype" returns classobj.ecmaprototype
-    - Static properties
-    - Inherit static properties
   - Number value
    - Inherit from instance definitions of Number class (including bound methods)
   - Boolean value
@@ -40,6 +30,7 @@ Property operations:
   - Deleting class static "prototype" results into error.
 - [ ] getglobalproperty
 - [ ] setglobalproperty
+- [ ] callglobalproperty
 - [ ] nameiterator
   - Dictionary of weak keys cannot be iterated as it holds a JavaScript WeakMap.
 - [ ] valueiterator
@@ -62,6 +53,17 @@ Define the following ActionScript 3 classes and properties:
 - [ ] `String`
 - [ ] `Boolean`
 - [ ] `Array`
+- [ ] `Error`
+- [ ] `ArgumentError`
+- [ ] `DefinitionError`
+- [ ] `EvalError`
+- [ ] `RangeError`
+- [ ] `ReferenceError`
+- [ ] `SecurityError`
+- [ ] `SyntaxError`
+- [ ] `TypeError`
+- [ ] `URIError`
+- [ ] `VerifyError`
 - [ ] `flash.utils.Dictionary`
 - [ ] `__AS3__.vec.Vector`
 - [ ] `__AS3__.vec.Vector$double`
