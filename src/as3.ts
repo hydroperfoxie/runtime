@@ -1,10 +1,15 @@
 import { assert, FlexVector } from "./util";
 
 const CONSTRUCTOR_INDEX = 0;
-const ARRAY_DYNAMIC_PROPERTIES_INDEX = 1;
-const ARRAY_SUBARRAY_INDEX = 2;
+
+const DYNAMIC_PROPERTIES_INDEX = 1;
+
+const ARRAY_SUBARRAY_INDEX = DYNAMIC_PROPERTIES_INDEX + 1;
+
 const VECTOR_SUBARRAY_INDEX = 1;
 const VECTOR_FIXED_INDEX = VECTOR_SUBARRAY_INDEX + 1;
+
+const DICTIONARY_PROPERTIES_INDEX = 1;
 
 export abstract class Ns
 {
@@ -549,21 +554,94 @@ export function inobject(base: any, name: string): boolean
 }
 
 /**
- * Checks whether an object owns a given property name.
+ * Checks whether an object owns a given property name or key.
  * 
  * This method looks for Array element indices and own variables,
  * either for a base class or for a base instance.
  */
-export function hasownproperty(base: any, name: string): boolean
+export function hasownproperty(base: any, name: any): boolean
 {
     if (base instanceof Array)
     {
-        fix-me;
+        const ctor = base[CONSTRUCTOR_INDEX] as Class;
+        if (ctor.dynamic)
+        {
+            if (base[DYNAMIC_PROPERTIES_INDEX].has(String(name)))
+            {
+                return true;
+            }
+        }
+        let c1 = ctor;
+        while (c1 !== null)
+        {
+            let varb = c1.prototypenames.getpublicname(String(name));
+            if (varb instanceof Variable)
+            {
+                return true;
+            }
+            c1 = ctor.baseclass;
+        }
+        // Test collection properties (Array, Vector[$double|$float|$int|$uint], Dictionary)
+        if (istype(base, arrayclass))
+        {
+            if (Number(name) != name >> 0)
+            {
+                return false;
+            }
+            let i = name >> 0;
+            return i >= 0 && i < base[ARRAY_SUBARRAY_INDEX].length;
+        }
+        if (istype(base, vectorclass))
+        {
+            if (Number(name) != name >> 0)
+            {
+                return false;
+            }
+            let i = name >> 0;
+            return i >= 0 && i < base[VECTOR_SUBARRAY_INDEX].length;
+        }
+        if (istype(base, vectordoubleclass))
+        {
+            if (Number(name) != name >> 0)
+            {
+                return false;
+            }
+            let i = name >> 0;
+            return i >= 0 && i < base[VECTOR_SUBARRAY_INDEX].length;
+        }
+        if (istype(base, vectorfloatclass))
+        {
+            if (Number(name) != name >> 0)
+            {
+                return false;
+            }
+            let i = name >> 0;
+            return i >= 0 && i < base[VECTOR_SUBARRAY_INDEX].length;
+        }
+        if (istype(base, vectorintclass))
+        {
+            if (Number(name) != name >> 0)
+            {
+                return false;
+            }
+            let i = name >> 0;
+            return i >= 0 && i < base[VECTOR_SUBARRAY_INDEX].length;
+        }
+        if (istype(base, vectoruintclass))
+        {
+            if (Number(name) != name >> 0)
+            {
+                return false;
+            }
+            let i = name >> 0;
+            return i >= 0 && i < base[VECTOR_SUBARRAY_INDEX].length;
+        }
+        if (istype(base, dictionaryclass))
+        {
+            return base[DICTIONARY_PROPERTIES_INDEX].has(name);
+        }
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 /**
@@ -720,7 +798,7 @@ export const arrayclass = defineclass(name($publicns, "Array"),
 
         ctor(this: any, length: number = 0)
         {
-            this[ARRAY_DYNAMIC_PROPERTIES_INDEX] = new Map<any, any>();
+            this[DYNAMIC_PROPERTIES_INDEX] = new Map<any, any>();
             this[ARRAY_SUBARRAY_INDEX] = new Array(Math.max(0, length >>> 0));
         },
     },
@@ -780,6 +858,19 @@ export const vectoruintclass = defineclass(name($publicns, "Vector$uint"),
         ctor(this: any, length: number = 0, fixed: boolean = false)
         {
             this[VECTOR_SUBARRAY_INDEX] = new FlexVector(Uint32Array, Number(length), fixed);
+        },
+    },
+    [
+    ]
+);
+
+$publicns = packagens("flash.utils");
+
+export const dictionaryclass = defineclass(name($publicns, "Dictionary"),
+    {
+        ctor(this: any, weakKeys: boolean = false)
+        {
+            this[DICTIONARY_PROPERTIES_INDEX] = weakKeys ? new WeakMap<any, any>() : new Map<any, any>();
         },
     },
     [

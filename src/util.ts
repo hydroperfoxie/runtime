@@ -106,14 +106,14 @@ export class FlexVector
 
     hasIndex(index: number): boolean
     {
-        index = Math.max(0, index >>> 0);
-        return index < this.m_length;
+        index = index >>0;
+        return index >= 0 && index < this.m_length;
     }
 
     get(index: number): number
     {
-        index = Math.max(0, index >>> 0);
-        return index < this.m_length ? this.m_array[index] : 0;
+        index = index >> 0;
+        return index >= 0 && index < this.m_length ? this.m_array[index] : 0;
     }
 
     /**
@@ -121,14 +121,14 @@ export class FlexVector
      */
     set(index: number, value: number): void
     {
-        index = Math.max(0, index >>> 0);
+        index = index >> 0;
         value = Number(value);
         if (index == this.m_length)
         {
             assertNotFixedVectorError(this.m_fixed);
             this.push(value);
         }
-        if (index >= this.m_length)
+        if (index < 0 || index >= this.m_length)
         {
             throw new RangeError("Index out of bounds.");
         }
