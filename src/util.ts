@@ -23,40 +23,40 @@ export class FlexVector
     private m_length: number = 0;
     private m_fixed: boolean;
 
-    constructor(typedArrayConstructor: new () => any, argument: any = 0, fixed: boolean = false)
+    constructor(typedArrayConstructor: new (arg: any) => any, argument: any = 0, fixed: boolean = false)
     {
         this.typedArrayConstructor = typedArrayConstructor;
         if (typeof argument == "number")
         {
             argument = Math.max(0, argument >>> 0);
-            this.m_array = new this.typedArrayConstructor(Math.max(INITIAL_CAPACITY, argument));
+            this.m_array = new typedArrayConstructor(Math.max(INITIAL_CAPACITY, argument));
             this.m_length = argument;
         }
         else
         {
             if (argument.length == 0)
             {
-                this.m_array = new this.typedArrayConstructor(INITIAL_CAPACITY);
+                this.m_array = new typedArrayConstructor(INITIAL_CAPACITY);
                 this.m_length = 0;
             } else {
-                this.m_array = argument.slice(0);
+                this.m_array = new typedArrayConstructor(argument);
                 this.m_length = argument.length;
             }
         }
         this.m_fixed = fixed;
     }
 
-    entries(): Iterator<[number, number]>
+    entries(): Iterable<[number, number]>
     {
         return this.m_array.subarray(0, this.m_length).entries();
     }
 
-    keys(): Iterator<number>
+    keys(): ArrayLike<Iterable<number>>
     {
         return this.m_array.subarray(0, this.m_length).keys();
     }
 
-    values(): Iterator<number>
+    values(): ArrayLike<Iterable<number>>
     {
         return this.m_array.subarray(0, this.m_length).values();
     }
@@ -300,10 +300,10 @@ export class FlexVector
         newCapacity = newCapacity < this.m_length ? this.m_length : newCapacity;
         this.m_array = new this.typedArrayConstructor(newCapacity);
         this.m_array.set(k.subarray(0, startIndex));
-        this.m_array.set(k.subarray(startIndex + deleteCount, kmlen), startIndex);
+        this.m_array.set(new this.typedArrayConstructor(items), startIndex);
+        this.m_array.set(k.subarray(startIndex + deleteCount, kmlen), startIndex + items.length);
         const r = k.slice(startIndex, startIndex + deleteCount);
-        this.m_array.set(new this.typedArrayConstructor(items), kmlen - deleteCount);
-        return new FlexVector(r);
+        return new FlexVector(this.typedArrayConstructor, r);
     }
 
     slice(startIndex: number = 0, endIndex: number = 0x7FFFFFFF): FlexVector
@@ -312,7 +312,7 @@ export class FlexVector
         endIndex = Math.max(0, endIndex >>> 0);
         startIndex = this.hasIndex(startIndex) ? startIndex : this.m_length;
         endIndex = endIndex < startIndex ? startIndex : endIndex;
-        return new FlexVector(this.m_array.slice(startIndex, endIndex));
+        return new FlexVector(this.typedArrayConstructor, this.m_array.slice(startIndex, endIndex));
     }
     
     sort(sortBehavior: any): FlexVector
