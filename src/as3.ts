@@ -548,7 +548,7 @@ const boundmethods = new Map<Array<any>, Map<Method, Function>>();
  * This method is used by the `name in o` expression, where
  * `o` is either a base class or a base instance.
  */
-export function inobject(base: any, name: string): boolean
+export function inobject(base: any, name: any): boolean
 {
     checks_here;
 }
