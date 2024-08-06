@@ -206,7 +206,7 @@ export class Names
         let found = false;
         for (const ns of nsset)
         {
-            const result = ns.ispublicns() ? this.getpublicname(name) : this.getnsname(ns, name);
+            const result = ns.ispublicns() || ns === as3ns ? this.getpublicname(name) : this.getnsname(ns, name);
             if (result !== null)
             {
                 if (found)
@@ -224,7 +224,7 @@ export class Names
         let found = false;
         for (const [ns, names] of this.m_dict)
         {
-            if (ns instanceof Systemns && ns.kind == Systemns.PUBLIC)
+            if ((ns instanceof Systemns && ns.kind == Systemns.PUBLIC) || ns === as3ns)
             {
                 const result = names.has(name);
 
@@ -268,7 +268,7 @@ export class Names
     {
         for (const ns of nsset)
         {
-            const result = ns.ispublicns() ? this.getpublicname(name) : this.getnsname(ns, name);
+            const result = ns.ispublicns() || ns === as3ns ? this.getpublicname(name) : this.getnsname(ns, name);
             if (result !== null)
             {
                 return result;
@@ -281,7 +281,7 @@ export class Names
     {
         for (const [ns, names] of this.m_dict)
         {
-            if (ns instanceof Systemns && ns.kind == Systemns.PUBLIC)
+            if ((ns instanceof Systemns && ns.kind == Systemns.PUBLIC) || ns === as3ns)
             {
                 const result = names.get(name) ?? null;
                 if (result !== null)
@@ -1385,9 +1385,15 @@ export const classclass = defineclass(name($publicns, "Class"),
     ]
 );
 
+const NUMBER_VALUE_INDEX = 1;
 export const numberclass = defineclass(name($publicns, "Number"),
     {
         final: true,
+
+        ctor(this: any)
+        {
+            this[NUMBER_VALUE_INDEX] = 0;
+        },
     },
     [
     ]
@@ -1421,17 +1427,29 @@ export const numberclasses = [numberclass, intclass, uintclass, floatclass];
 export const floatclasses = [numberclass, floatclass];
 export const integerclasses = [intclass, uintclass];
 
+const BOOLEAN_VALUE_INDEX = 1;
 export const booleanclass = defineclass(name($publicns, "Boolean"),
     {
         final: true,
+
+        ctor(this: any)
+        {
+            this[BOOLEAN_VALUE_INDEX] = true;
+        },
     },
     [
     ]
 );
 
+const STRING_VALUE_INDEX = 1;
 export const stringclass = defineclass(name($publicns, "String"),
     {
         final: true,
+
+        ctor(this: any)
+        {
+            this[STRING_VALUE_INDEX] = "";
+        },
     },
     [
     ]
