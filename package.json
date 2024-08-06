@@ -8,7 +8,7 @@
   },
   "scripts": {
     "build": "rollup --config",
-    "doc": "npx typedoc --options typedoc.json --theme ig-typedoc-theme",
+    "doc": "npx typedoc --options typedoc.json",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
