@@ -1,6 +1,5 @@
 {
     "$schema": "https://typedoc.org/schema.json",
     "entryPoints": ["./src/index.ts"],
-    "out": "target/doc",
-    "theme": "ig-typedoc-theme"
+    "out": "target/doc"
 }

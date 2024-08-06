@@ -36,8 +36,6 @@ jobs:
         - uses: actions/checkout@v4
         - name: Install packages
           run: npm install
-        - name: Install custom TypeDoc theme
-          run: npm install -g ig-typedoc-theme
         - name: Generate TypeDoc
           run: npm run doc
         - name: Git commit report
