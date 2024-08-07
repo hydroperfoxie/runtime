@@ -1,7 +1,7 @@
 {
-  "name": "com.hydroperfox.ie",
+  "name": "com.hydroperfox.skyflex",
   "version": "1.0.0",
-  "description": "Iron runtime",
+  "description": "SkyFlex runtime",
   "main": "src/index.ts",
   "directories": {
     "doc": "docs"
@@ -13,14 +13,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/iron-HYDROPERFOX/runtime.git"
+    "url": "git+https://github.com/skyflexengine/runtime.git"
   },
   "author": "hydroperfox",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/iron-HYDROPERFOX/runtime/issues"
+    "url": "https://github.com/skyflexengine/runtime/issues"
   },
-  "homepage": "https://github.com/iron-HYDROPERFOX/runtime#readme",
+  "homepage": "https://github.com/skyflexengine/runtime#readme",
   "devDependencies": {
     "@rollup/plugin-terser": "^0.4.4",
     "@types/node": "^22.1.0",
